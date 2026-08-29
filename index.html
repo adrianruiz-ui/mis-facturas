@@ -213,6 +213,20 @@
 
   /* ---------- lista ---------- */
   .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s2)}
+  .filtros{display:flex;gap:var(--s1);flex-wrap:wrap;margin-bottom:var(--s2)}
+  .chip{
+    font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;
+    padding:5px 12px;border-radius:999px;border:1px solid var(--rule);
+    background:transparent;color:var(--ink-3);transition:all .12s ease;
+  }
+  .chip:hover{color:var(--ink-2);border-color:var(--ink-3)}
+  .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .chip .n{opacity:.6;margin-left:5px}
+  .more{
+    width:100%;background:transparent;border:0;border-top:1px solid var(--rule-2);
+    padding:14px;font-family:var(--f-mono);font-size:12px;color:var(--ink-3);letter-spacing:.04em;
+  }
+  .more:hover{color:var(--accent);background:var(--surface-2)}
   .section-head .count{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
   .list{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
   .item{padding:14px var(--s4);border-bottom:1px solid var(--rule-2);transition:background .12s ease}
@@ -351,6 +365,7 @@
       <span class="eyebrow">Gastos del mes</span>
       <span class="count" id="resumen"></span>
     </div>
+    <div class="filtros" id="filtros"></div>
     <div class="list" id="list"></div>
   </section>
 
@@ -429,6 +444,9 @@
 
   var state = { rfc:"", ingresoDefault:DEF_ING, ingresos:[], gastos:[], reglas:{} };
   var mesActual = null;
+  var filtro = "todos";
+  var verTodos = false;
+  var LIMITE = 12;
 
   var $ = function(id){ return document.getElementById(id); };
   var r2 = function(n){ return Math.round((n + Number.EPSILON) * 100) / 100; };
@@ -616,6 +634,30 @@
     body.appendChild(kv);
   }
 
+  var GRUPOS = {
+    todos:   { label:"Todos",       test:function(){ return true; } },
+    revisar: { label:"Por revisar", test:function(t){ return t === "revisar"; } },
+    aplican: { label:"Aplican",     test:function(t){ return (TIPOS[t]||TIPOS.revisar).prop > 0; } },
+    fuera:   { label:"No cuentan",  test:function(t){ return t === "personal" || t === "anual"; } }
+  };
+
+  function renderFiltros(m){
+    var cont=$("filtros"); cont.innerHTML="";
+    if(m.gastos.length < 5) return;
+    Object.keys(GRUPOS).forEach(function(key){
+      var n = m.gastos.filter(function(g){ return GRUPOS[key].test(tipoDe(g).tipo); }).length;
+      if(!n && key !== "todos") return;
+      var b=document.createElement("button");
+      b.type="button"; b.className="chip";
+      b.setAttribute("aria-pressed", String(filtro === key));
+      b.innerHTML = GRUPOS[key].label + '<span class="n">' + n + '</span>';
+      b.addEventListener("click", function(){
+        filtro = key; verTodos = false; render();
+      });
+      cont.appendChild(b);
+    });
+  }
+
   function renderLista(m){
     var list=$("list");
     list.innerHTML="";
@@ -625,6 +667,7 @@
       e.textContent = "Ninguna factura de gastos este mes todavía.";
       list.appendChild(e);
       $("resumen").textContent="";
+      $("filtros").innerHTML="";
       return;
     }
 
@@ -633,8 +676,26 @@
     if(m.revisar) partes.push(m.revisar+" por revisar");
     if(m.personales) partes.push(m.personales+" personales");
     $("resumen").textContent = partes.join(" · ");
+    renderFiltros(m);
 
-    m.gastos.slice().sort(function(a,b){ return a.fecha < b.fecha ? 1 : -1; }).forEach(function(g){
+    // Lo que necesita tu decisión va primero; el resto por fecha, del más reciente al más viejo.
+    var visibles = m.gastos.filter(function(g){ return GRUPOS[filtro].test(tipoDe(g).tipo); })
+      .sort(function(a,b){
+        var ra = tipoDe(a).tipo === "revisar" ? 0 : 1;
+        var rb = tipoDe(b).tipo === "revisar" ? 0 : 1;
+        if(ra !== rb) return ra - rb;
+        return a.fecha < b.fecha ? 1 : -1;
+      });
+
+    if(!visibles.length){
+      var v=document.createElement("div"); v.className="empty";
+      v.textContent="Nada en este filtro.";
+      list.appendChild(v);
+      return;
+    }
+
+    var mostrados = verTodos ? visibles : visibles.slice(0, LIMITE);
+    mostrados.forEach(function(g){
       var c=tipoDe(g), tp=TIPOS[c.tipo]||TIPOS.revisar;
       var acred=r2((Number(g.iva)||0)*tp.prop);
 
@@ -689,6 +750,14 @@
       item.appendChild(row1); item.appendChild(row2); item.appendChild(why); item.appendChild(sel);
       list.appendChild(item);
     });
+
+    if(visibles.length > mostrados.length){
+      var more=document.createElement("button");
+      more.type="button"; more.className="more";
+      more.textContent="Ver los otros " + (visibles.length - mostrados.length);
+      more.addEventListener("click", function(){ verTodos = true; render(); });
+      list.appendChild(more);
+    }
   }
 
   function render(){
