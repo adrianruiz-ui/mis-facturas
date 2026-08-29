@@ -42,6 +42,8 @@ La meta mensual es `IVA trasladado − IVA retenido`, que con la retención de d
 
 En Chrome puedes instalarla como app desde el icono de la barra de direcciones.
 
+No usa service worker: cada carga trae la versión actual del sitio, sin cachés fantasma que sirvan una versión vieja.
+
 ## Privacidad
 
 - El repositorio contiene **solo código**. Ningún dato fiscal.
@@ -58,7 +60,7 @@ python3 -m http.server 8080
 # abre http://localhost:8080
 ```
 
-Si cambias `index.html`, sube el número de versión en `CACHE` dentro de `sw.js` para que el service worker sirva la versión nueva.
+Un cambio en `index.html` se ve en la siguiente carga. `sw.js` solo existe para desinstalar el service worker que tuvieron las primeras versiones; se puede borrar cuando ya nadie cargue el sitio desde ese caché.
 
 ## Licencia
 
