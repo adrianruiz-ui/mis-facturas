@@ -700,16 +700,20 @@
     var serie = serieAnual(anio);
     var resico = 0;
     serie.forEach(function(f){ resico += f.base; });
+    resico = r2(resico);
+    // El tope del 15% se mide contra los ingresos del ejercicio completo. Mientras
+    // el año va a la mitad, proyectamos con el promedio de los meses que ya cargaste.
+    var proyectado = serie.length ? r2((resico / serie.length) * 12) : r2((Number(state.ingresoDefault)||0) * 12);
     var sueldo = Number(state.sueldoAnual) || 0;
-    var totales = r2(resico + sueldo);
+    var totales = r2(proyectado + sueldo);
     var topeQuince = r2(totales * 0.15);
     var tope = r2(Math.min(topeQuince, TOPE_UMA));
     var aplicable = r2(Math.min(ded, tope));
     var ahorro = sueldo > 0 ? r2(isrAnual(sueldo) - isrAnual(Math.max(0, sueldo - aplicable))) : 0;
     return {
       anio:anio, deducciones:ded, cuantas:n, tope:tope, topeQuince:topeQuince,
-      aplicable:aplicable, sueldo:sueldo, resico:r2(resico), totales:totales,
-      ahorro:ahorro, serie:serie
+      aplicable:aplicable, sueldo:sueldo, resico:resico, proyectado:proyectado,
+      meses:serie.length, totales:totales, ahorro:ahorro, serie:serie
     };
   }
 
@@ -948,7 +952,12 @@
       vacio.textContent="Todavía no registras gastos médicos, seguros de gastos médicos, colegiaturas ni aportaciones al retiro. Son los que se descuentan de tu ISR de sueldos en la anual, y valen bastante más que el IVA.";
       b1.appendChild(vacio);
     } else {
+      var rot=document.createElement("span"); rot.className="eyebrow";
+      rot.textContent = a.sueldo > 0 ? "Ahorro estimado en tu anual" : "Acumulado del año";
+      b1.appendChild(rot);
+
       var big=document.createElement("div"); big.className="cifra-grande";
+      if(!a.sueldo) big.style.color = "var(--ink)";
       big.textContent = a.sueldo > 0 ? money(a.ahorro) : money(a.deducciones);
       b1.appendChild(big);
 
@@ -988,7 +997,9 @@
 
     var nota=document.createElement("p"); nota.className="fine";
     nota.textContent = "El tope es el menor entre el 15% de tus ingresos totales ("+money(a.topeQuince)+
-      ") y 5 UMA anuales ("+money(TOPE_UMA)+"). Las colegiaturas y las aportaciones al retiro llevan topes propios que aquí no se separan, y todo debe estar pagado con medio electrónico. Es una estimación: confírmala con tu contador.";
+      ") y 5 UMA anuales ("+money(TOPE_UMA)+"). Para el 15% proyecto tu facturación al año ("+money(a.proyectado)+
+      ", con "+a.meses+" mes"+(a.meses===1?"":"es")+" cargado"+(a.meses===1?"":"s")+") y le sumo tu sueldo. "+
+      "Las colegiaturas y las aportaciones al retiro llevan topes propios que aquí no se separan, y todo debe estar pagado con medio electrónico. Es una estimación: confírmala con tu contador.";
     b1.appendChild(nota);
     body.appendChild(b1);
 
