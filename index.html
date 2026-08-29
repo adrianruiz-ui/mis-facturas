@@ -586,12 +586,26 @@
     var at=function(el,name){ if(!el) return ""; return el.getAttribute(name) || el.getAttribute(name.charAt(0).toLowerCase()+name.slice(1)) || ""; };
     var num=function(v){ var n=parseFloat(v); return isNaN(n)?0:n; };
 
+    // Un CFDI repite los impuestos a nivel concepto y a nivel comprobante.
+    // Nos quedamos solo con los del comprobante para no sumarlos dos veces.
+    var enConcepto=function(n){
+      for(var e=n.parentNode; e && e.localName; e=e.parentNode){
+        if(e.localName==="Concepto") return true;
+        if(e.localName==="Comprobante") return false;
+      }
+      return false;
+    };
+    var nivelComprobante=function(arr){
+      var top=arr.filter(function(n){ return !enConcepto(n); });
+      return top.length ? top : arr;
+    };
+
     var ivaT=0, ivaR=0, isrR=0;
-    traslados.forEach(function(t){
+    nivelComprobante(traslados).forEach(function(t){
       var imp=at(t,"Impuesto");
       if(imp==="002" || imp==="") ivaT += num(at(t,"Importe"));
     });
-    retenciones.forEach(function(t){
+    nivelComprobante(retenciones).forEach(function(t){
       var imp=at(t,"Impuesto");
       if(imp==="002") ivaR += num(at(t,"Importe"));
       else if(imp==="001") isrR += num(at(t,"Importe"));

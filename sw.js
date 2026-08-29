@@ -1,6 +1,6 @@
 /* Service worker mínimo: deja la app disponible sin conexión.
    Sube la versión cada vez que cambies index.html. */
-const CACHE = "mis-facturas-v2";
+const CACHE = "mis-facturas-v3";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (e) => {
