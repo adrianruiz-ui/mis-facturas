@@ -1,0 +1,19 @@
+{
+  "name": "Mis facturas del mes",
+  "short_name": "Facturas",
+  "description": "Registro personal de facturas: cuánto te falta facturar y cuánto pagarías de IVA.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F4F0",
+  "theme_color": "#F2F4F0",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
