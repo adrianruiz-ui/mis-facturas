@@ -477,13 +477,23 @@
     if(t) statusTimer = setTimeout(function(){ $("status").textContent = " "; }, 6000);
   }
 
+  // La clasificación calculada (_c) nunca se guarda: si se persistiera, un gasto
+  // quedaría congelado con la regla vieja y no se recalcularía nunca.
+  function limpio(){
+    return state.gastos.map(function(g){
+      var o={}; for(var k in g){ if(k !== "_c" && Object.prototype.hasOwnProperty.call(g,k)) o[k]=g[k]; }
+      return o;
+    });
+  }
+
+  function snapshot(){
+    return { rfc:state.rfc, ingresoDefault:state.ingresoDefault,
+             ingresos:state.ingresos, gastos:limpio(), reglas:state.reglas };
+  }
+
   function save(){
-    try{
-      localStorage.setItem(KEY, JSON.stringify({
-        rfc:state.rfc, ingresoDefault:state.ingresoDefault,
-        ingresos:state.ingresos, gastos:state.gastos, reglas:state.reglas
-      }));
-    }catch(e){ status("no pude guardar en este navegador"); }
+    try{ localStorage.setItem(KEY, JSON.stringify(snapshot())); }
+    catch(e){ status("no pude guardar en este navegador"); }
   }
 
   function load(){
@@ -496,6 +506,7 @@
       state.ingresoDefault = Number(s.ingresoDefault) || DEF_ING;
       state.ingresos = Array.isArray(s.ingresos) ? s.ingresos : [];
       state.gastos = Array.isArray(s.gastos) ? s.gastos : [];
+      state.gastos.forEach(function(g){ delete g._c; });
       state.reglas = (s.reglas && typeof s.reglas === "object") ? s.reglas : {};
     }catch(e){}
   }
@@ -1022,8 +1033,7 @@
 
   $("backup").addEventListener("click", function(){
     descargar("respaldo-facturas-"+new Date().toISOString().slice(0,10)+".json",
-      JSON.stringify({rfc:state.rfc,ingresoDefault:state.ingresoDefault,ingresos:state.ingresos,gastos:state.gastos,reglas:state.reglas},null,2),
-      "application/json");
+      JSON.stringify(snapshot(), null, 2), "application/json");
     status("respaldo descargado");
   });
 
@@ -1040,6 +1050,7 @@
         state.ingresoDefault=Number(s.ingresoDefault)||DEF_ING;
         state.ingresos=Array.isArray(s.ingresos)?s.ingresos:[];
         state.gastos=Array.isArray(s.gastos)?s.gastos:[];
+        state.gastos.forEach(function(g){ delete g._c; });
         state.reglas=(s.reglas&&typeof s.reglas==="object")?s.reglas:{};
         $("cfg-rfc").value=state.rfc;
         $("cfg-ing").value=Number(state.ingresoDefault).toFixed(2);
