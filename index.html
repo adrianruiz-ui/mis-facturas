@@ -424,6 +424,7 @@
     { p:["4412","4411","4410","4413","6012"], t:"actividad", d:"papelería" },
     { p:["8311","8312"],                   t:"mixto",       d:"telecomunicaciones" },
     { p:["8413"],                          t:"anual",       d:"seguro" },
+    { p:["8412","8410","8411"],            t:"revisar",     d:"servicio financiero — cuenta si la cuenta es de tu actividad" },
     { p:["85","86"],                       t:"anual",       d:"salud o educación" },
     { p:["51"],                            t:"revisar",     d:"medicamentos" },
     { p:["50","53","52","56","47","76","54","55","60"], t:"personal", d:"consumo personal" },
@@ -437,6 +438,7 @@
     { k:["pemex","shell","mobil","chevron","gasolin","combustible"], t:"actividad", d:"combustible" },
     { k:["apple","google","microsoft","adobe","openai","anthropic","notion","figma","canva","slack","zoom","dropbox","github","vercel","amazon web","office depot","officemax","steren","best buy","cyberpuerta","mercado libre"], t:"actividad", d:"equipo o software" },
     { k:["telmex","izzi","totalplay","at&t","att ","telcel","movistar","megacable"], t:"mixto", d:"telecomunicaciones" },
+    { k:["bbva","banorte","santander","citibanamex","banamex","hsbc","scotiabank","banregio","banco","nu mexico","hey banco","american express"], t:"revisar", d:"banco — cuenta si es la cuenta de tu actividad" },
     { k:["farmacia","similares","benavides"], t:"revisar", d:"farmacia" },
     { k:["hospital","clinica","medic","dental","laboratorio","seguros","gnp","axa","metlife","colegio","universidad","instituto"], t:"anual", d:"salud, seguro o educación" },
     { k:["oxxo","7-eleven","seven eleven","walmart","soriana","chedraui","costco","sam's","sams club","superama","liverpool","suburbia","zara","cinepolis","cinemex","netflix","rappi","didi food","uber eats"], t:"personal", d:"consumo personal" }
@@ -460,6 +462,13 @@
   };
   var norm = function(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); };
   var uid = function(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); };
+  // Las razones sociales son larguísimas; para leer la lista basta el nombre comercial.
+  var nombreCorto = function(n){
+    var t = String(n||"").trim();
+    var corte = t.split(/,| S\.?A\.?P?\.?I?\.? | S\.? ?DE ?R\.?L| SOFOM| INSTITUCION | GRUPO FINANCIERO/i)[0].trim();
+    corte = corte.replace(/\s+(S\.?A\.?|S\.?A\.?P\.?I\.?|DE|C\.?V\.?|S\.?C\.?)+\.?$/i,"").trim();
+    return (corte.length >= 3 ? corte : t);
+  };
 
   var statusTimer = null;
   function status(t){
@@ -702,7 +711,9 @@
       var item=document.createElement("div"); item.className="item";
 
       var row1=document.createElement("div"); row1.className="row1";
-      var name=document.createElement("span"); name.className="name"; name.textContent=g.proveedor||"Sin nombre";
+      var name=document.createElement("span"); name.className="name";
+      name.textContent=nombreCorto(g.proveedor)||"Sin nombre";
+      if(g.proveedor && nombreCorto(g.proveedor) !== g.proveedor) name.title=g.proveedor;
       var mon=document.createElement("span"); mon.className="money"; mon.textContent=money((Number(g.subtotal)||0)+(Number(g.iva)||0));
       var x=document.createElement("button"); x.className="x"; x.type="button"; x.textContent="✕";
       x.setAttribute("aria-label","Quitar "+(g.proveedor||"factura"));
