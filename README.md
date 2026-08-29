@@ -36,7 +36,7 @@ La meta mensual es `IVA trasladado − IVA retenido`, que con la retención de d
 ## Publicarlo en GitHub Pages
 
 1. Crea un repositorio nuevo (puede ser **privado**; Pages funciona en repos privados con cuenta de pago, si no, usa público — el código no contiene datos tuyos).
-2. Sube estos archivos a la raíz del repo: `index.html`, `manifest.webmanifest`, `icon.svg`, `sw.js`, `README.md`.
+2. Sube estos archivos a la raíz del repo: `index.html`, `manifest.webmanifest`, `icon.svg`, `README.md`.
 3. **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save.**
 4. En un minuto queda en `https://<tu-usuario>.github.io/<repo>/`.
 
@@ -65,3 +65,35 @@ Un cambio en `index.html` se ve en la siguiente carga. `sw.js` solo existe para 
 ## Licencia
 
 MIT
+
+## Próximos pasos
+
+Ordenados por lo que más resuelve con menos trabajo. La regla del proyecto es que siga siendo un solo archivo que se abre y se entiende en diez segundos.
+
+### 1. Contador anual de deducciones personales
+Los gastos médicos, seguros de gastos médicos, colegiaturas y aportaciones al retiro ya se etiquetan **Para tu anual**, pero solo se suman dentro del mes. Falta un acumulado del ejercicio con su tope (el menor entre el 15% de tus ingresos totales y 5 UMA anuales) y una estimación de lo que valen contra tu ISR de sueldos.
+
+Es el cambio de mayor valor económico del proyecto: esos gastos se descuentan a tu tasa marginal de salarios (~21–30%), no al 16% del IVA. Una consulta médica vale bastante más ahí que como IVA acreditable.
+
+### 2. Vista de año
+Doce meses en una tabla: base facturada, IVA pagado, IVA acreditado, saldo a favor arrastrado. Sirve para ver si el saldo a favor se está acumulando sin recuperarse y para llegar a la anual con todo junto.
+
+### 3. Descarga masiva del SAT
+Hoy arrastras los XML a mano. El SAT tiene un servicio oficial y gratuito de descarga masiva de CFDI, autenticado con e.firma, que entrega todo lo emitido y recibido a tu RFC.
+
+No se puede llamar desde el navegador: necesita SOAP y tu e.firma, que no debe salir de tu equipo. Sería un script de Node que corres localmente y que deja los XML en una carpeta; la app los lee de ahí. Es la mejora que más trabajo manual elimina, y también la más grande.
+
+### 4. Aviso de cierre
+Un recordatorio el día 15 con las cifras listas para capturar en el portal del SAT: ISR a pagar, IVA trasladado cobrado, IVA retenido, IVA acreditable. Cierra el ciclo; hoy la app te informa pero no te acompaña hasta la declaración.
+
+### 5. Respaldo menos frágil
+Todo vive en el `localStorage` de un navegador. Un recordatorio de respaldo cada mes, o guardar el JSON directamente en una carpeta con la File System Access API, quita el único riesgo real de pérdida de datos.
+
+### 6. Que el clasificador aprenda de la descripción
+Hoy aprende por RFC del emisor. Aprender también por palabras de la descripción cubriría a proveedores que facturan cosas distintas — un mismo RFC que a veces vende software y a veces comida.
+
+### Lo que conviene NO hacer
+
+- **OCR de fotos de tickets.** Suena atractivo pero un ticket no genera IVA acreditable: solo un CFDI válido lo hace. El OCR agregaría un modelo de IA, una llave de API y una fuente de errores para producir datos que de todas formas hay que confirmar contra el XML.
+- **Robots que facturen solos en portales de comercios.** Cada portal es distinto, muchos tienen CAPTCHA y romperlo no está sobre la mesa. Es trabajo de mantenimiento infinito para la parte más chica del problema.
+- **Backend, cuentas de usuario, base de datos.** Nada de eso hace falta para una persona con un RFC, y cada pieza agrega costo, superficie de ataque y algo que se puede caer.
