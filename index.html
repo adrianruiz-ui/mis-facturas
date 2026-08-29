@@ -166,17 +166,17 @@
     display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
   }
   details.base > summary::-webkit-details-marker{display:none}
-  .base .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
-  .base .amt{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px}
+  .base .lbl,.anio .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+  .base .amt,.anio .amt{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px}
   .base .tag{
     font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
     padding:2px 8px;border-radius:999px;
   }
   .base .tag.est{background:var(--warn-soft);color:var(--warn)}
   .base .tag.real{background:var(--accent-soft);color:var(--accent)}
-  .base .chev{margin-left:auto;color:var(--ink-3);font-size:12px;font-family:var(--f-mono)}
-  details.base[open] .chev::after{content:"cerrar"}
-  details.base:not([open]) .chev::after{content:"ver detalle"}
+  .base .chev,.anio .chev{margin-left:auto;color:var(--ink-3);font-size:12px;font-family:var(--f-mono)}
+  details.base[open] .chev::after,details.anio[open] .chev::after{content:"cerrar"}
+  details.base:not([open]) .chev::after,details.anio:not([open]) .chev::after{content:"ver detalle"}
   .base .body{padding:0 var(--s4) var(--s4);display:flex;flex-direction:column;gap:var(--s3);border-top:1px solid var(--rule-2);padding-top:var(--s3)}
   .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:var(--s3)}
   .kv > div{display:flex;flex-direction:column;gap:1px}
@@ -269,6 +269,32 @@
   .anual b{color:var(--ink);font-weight:600}
 
   /* ---------- pie ---------- */
+  /* ---------- año ---------- */
+  details.anio{border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}
+  details.anio > summary{
+    cursor:pointer;list-style:none;padding:14px var(--s4);
+    display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
+  }
+  details.anio > summary::-webkit-details-marker{display:none}
+  details.anio .inner{padding:0 var(--s4) var(--s4);border-top:1px solid var(--rule-2);padding-top:var(--s4);display:flex;flex-direction:column;gap:var(--s4)}
+  .bloque{display:flex;flex-direction:column;gap:var(--s2)}
+  .bloque .titulo{font-family:var(--f-display);font-size:18px;font-weight:600}
+  .cifra-grande{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:30px;font-weight:600;letter-spacing:-.035em;color:var(--accent)}
+  .tabla-scroll{overflow-x:auto;margin:0 calc(var(--s4) * -1);padding:0 var(--s4)}
+  table.anio{border-collapse:collapse;width:100%;font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:12.5px;min-width:460px}
+  table.anio th{
+    text-align:right;font-weight:500;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+    color:var(--ink-3);padding:0 0 8px 14px;white-space:nowrap;
+  }
+  table.anio th:first-child,table.anio td:first-child{text-align:left;padding-left:0}
+  table.anio td{text-align:right;padding:8px 0 8px 14px;border-top:1px solid var(--rule-2);white-space:nowrap}
+  table.anio tr.total td{border-top:1px solid var(--rule);font-weight:600}
+  table.anio td.pos{color:var(--accent)}
+  table.anio td.neg{color:var(--crit)}
+  .sueldo-row{display:flex;gap:var(--s2);align-items:flex-end;flex-wrap:wrap}
+  .sueldo-row label{display:flex;flex-direction:column;gap:5px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+  .sueldo-row input{max-width:200px}
+
   .foot-bar{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap}
   .foot-bar .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
   .status{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);min-height:18px}
@@ -371,6 +397,15 @@
 
   <p class="anual" id="anual" hidden></p>
 
+  <details class="anio" id="anio">
+    <summary>
+      <span class="lbl">El año completo</span>
+      <span class="amt" id="anio-resumen"></span>
+      <span class="chev"></span>
+    </summary>
+    <div class="inner" id="anio-body"></div>
+  </details>
+
   <div class="foot-bar">
     <span class="status" id="status">&nbsp;</span>
     <span class="acts">
@@ -402,6 +437,32 @@
 
   var KEY = "mis-facturas-v1";
   var DEF_ING = 21352.34;
+
+  // UMA 2026 (INEGI, vigente desde el 1 de febrero de 2026): $117.31 diarios.
+  var UMA_ANUAL = 42794.64;
+  var TOPE_UMA = 5 * UMA_ANUAL;
+
+  // Tarifa anual del art. 152 LISR, actualizada en el DOF del 28 de diciembre de 2025.
+  var TARIFA_ANUAL = [
+    [0.01,        0.00,        0.0192],
+    [10135.12,    194.59,      0.0640],
+    [86022.12,    5051.37,     0.1088],
+    [151176.20,   12140.13,    0.1600],
+    [175735.67,   16069.64,    0.1792],
+    [210403.70,   22282.14,    0.2136],
+    [424353.98,   67981.92,    0.2352],
+    [668840.15,   125485.07,   0.3000],
+    [1276925.99,  307910.81,   0.3200],
+    [1702567.98,  444116.23,   0.3400],
+    [5107703.93,  1601862.46,  0.3500]
+  ];
+
+  function isrAnual(base){
+    if(base <= 0) return 0;
+    var fila = TARIFA_ANUAL[0];
+    for(var i=0;i<TARIFA_ANUAL.length;i++){ if(base >= TARIFA_ANUAL[i][0]) fila = TARIFA_ANUAL[i]; }
+    return Math.round((fila[1] + (base - fila[0]) * fila[2]) * 100) / 100;
+  }
 
   var TIPOS = {
     actividad:  { prop:1,     label:"100% acreditable", badge:"b-ok",    txt:"Actividad — transporte, hospedaje, software, equipo, servicios" },
@@ -444,7 +505,7 @@
     { k:["oxxo","7-eleven","seven eleven","walmart","soriana","chedraui","costco","sam's","sams club","superama","liverpool","suburbia","zara","cinepolis","cinemex","netflix","rappi","didi food","uber eats"], t:"personal", d:"consumo personal" }
   ];
 
-  var state = { rfc:"", ingresoDefault:DEF_ING, ingresos:[], gastos:[], reglas:{} };
+  var state = { rfc:"", ingresoDefault:DEF_ING, sueldoAnual:0, ingresos:[], gastos:[], reglas:{} };
   var mesActual = null;
   var filtro = "todos";
   var verTodos = false;
@@ -487,7 +548,7 @@
   }
 
   function snapshot(){
-    return { rfc:state.rfc, ingresoDefault:state.ingresoDefault,
+    return { rfc:state.rfc, ingresoDefault:state.ingresoDefault, sueldoAnual:state.sueldoAnual,
              ingresos:state.ingresos, gastos:limpio(), reglas:state.reglas };
   }
 
@@ -504,6 +565,7 @@
       if(!s || typeof s !== "object") return;
       state.rfc = (s.rfc||"").toUpperCase();
       state.ingresoDefault = Number(s.ingresoDefault) || DEF_ING;
+      state.sueldoAnual = Number(s.sueldoAnual) || 0;
       state.ingresos = Array.isArray(s.ingresos) ? s.ingresos : [];
       state.gastos = Array.isArray(s.gastos) ? s.gastos : [];
       state.gastos.forEach(function(g){ delete g._c; });
@@ -568,6 +630,89 @@
     return 0.025;
   }
 
+  // Cifras de un mes sin considerar el saldo de IVA que viene arrastrando.
+  function brutoMes(mes){
+    var ing = state.ingresos.filter(function(f){ return monthKey(f.fecha) === mes; });
+    var base=0, trasladado=0, retenido=0, isrRet=0, real = ing.length > 0;
+    if(real){
+      ing.forEach(function(f){
+        base += Number(f.subtotal)||0; trasladado += Number(f.ivaTrasladado)||0;
+        retenido += Number(f.ivaRetenido)||0; isrRet += Number(f.isrRetenido)||0;
+      });
+    } else {
+      base = Number(state.ingresoDefault) || 0;
+      trasladado = r2(base*0.16); retenido = r2(base*(2/3)*0.16); isrRet = r2(base*0.0125);
+    }
+    var acred=0;
+    state.gastos.filter(function(g){ return monthKey(g.fecha) === mes; }).forEach(function(g){
+      var t = TIPOS[tipoDe(g).tipo] || TIPOS.revisar;
+      acred += (Number(g.iva)||0) * t.prop;
+    });
+    return {
+      real:real, base:r2(base), trasladado:r2(trasladado), retenido:r2(retenido),
+      isrRet:r2(isrRet), aCargo:r2(r2(trasladado)-r2(retenido)), acred:r2(acred)
+    };
+  }
+
+  function mesesConDatos(anio){
+    var set={};
+    state.ingresos.forEach(function(f){ if(String(f.fecha).slice(0,4)===anio) set[monthKey(f.fecha)]=true; });
+    state.gastos.forEach(function(g){ if(String(g.fecha).slice(0,4)===anio) set[monthKey(g.fecha)]=true; });
+    return Object.keys(set).sort();
+  }
+
+  // El IVA a favor no se pierde: se arrastra a los meses siguientes.
+  function saldoPrevio(mes){
+    var anio = mes.slice(0,4);
+    var saldo = 0;
+    mesesConDatos(anio).filter(function(m){ return m < mes; }).forEach(function(m){
+      var b = brutoMes(m);
+      var neto = b.aCargo - b.acred - saldo;
+      saldo = neto < 0 ? r2(-neto) : 0;
+    });
+    return r2(saldo);
+  }
+
+  function serieAnual(anio){
+    var saldo = 0;
+    return mesesConDatos(anio).map(function(m){
+      var b = brutoMes(m);
+      var neto = r2(b.aCargo - b.acred - saldo);
+      var fila = {
+        mes:m, base:b.base, aCargo:b.aCargo, acred:b.acred,
+        saldoPrevio:saldo, aPagar: neto > 0 ? neto : 0, saldo: neto < 0 ? r2(-neto) : 0,
+        isr: r2(b.base * tasaISR(b.base)), isrRet: b.isrRet, real: b.real
+      };
+      saldo = fila.saldo;
+      return fila;
+    });
+  }
+
+  function resumenAnual(anio){
+    var ded = 0, n = 0;
+    state.gastos.forEach(function(g){
+      if(String(g.fecha).slice(0,4) !== anio) return;
+      if(tipoDe(g).tipo !== "anual") return;
+      ded += Number(g.total) || ((Number(g.subtotal)||0)+(Number(g.iva)||0));
+      n++;
+    });
+    ded = r2(ded);
+    var serie = serieAnual(anio);
+    var resico = 0;
+    serie.forEach(function(f){ resico += f.base; });
+    var sueldo = Number(state.sueldoAnual) || 0;
+    var totales = r2(resico + sueldo);
+    var topeQuince = r2(totales * 0.15);
+    var tope = r2(Math.min(topeQuince, TOPE_UMA));
+    var aplicable = r2(Math.min(ded, tope));
+    var ahorro = sueldo > 0 ? r2(isrAnual(sueldo) - isrAnual(Math.max(0, sueldo - aplicable))) : 0;
+    return {
+      anio:anio, deducciones:ded, cuantas:n, tope:tope, topeQuince:topeQuince,
+      aplicable:aplicable, sueldo:sueldo, resico:r2(resico), totales:totales,
+      ahorro:ahorro, serie:serie
+    };
+  }
+
   function metrics(){
     var ing = state.ingresos.filter(function(f){ return monthKey(f.fecha) === mesActual; });
     var base=0, trasladado=0, retenido=0, isrRet=0, real = ing.length > 0;
@@ -594,13 +739,16 @@
       if(c.tipo === "anual") anual += Number(g.total) || ((Number(g.subtotal)||0)+(Number(g.iva)||0));
     });
     acred = r2(acred);
-    var restante = r2(Math.max(0, aCargo - acred));
+    var arrastre = saldoPrevio(mesActual);
+    var restante = r2(Math.max(0, aCargo - acred - arrastre));
     var isr = r2(base * tasaISR(base));
 
     return {
       real:real, ingresos:ing, base:base, trasladado:trasladado, retenido:retenido, isrRet:isrRet,
-      aCargo:aCargo, acred:acred, restante:restante, sobrante:r2(Math.max(0, acred - aCargo)),
-      faltaBase:r2(restante/0.16), pct: aCargo>0 ? Math.min(100,(acred/aCargo)*100) : 0,
+      aCargo:aCargo, acred:acred, restante:restante, arrastre:arrastre,
+      sobrante:r2(Math.max(0, acred + arrastre - aCargo)),
+      faltaBase:r2(restante/0.16),
+      pct: aCargo>0 ? Math.min(100,((acred+arrastre)/aCargo)*100) : 0,
       isr:isr, favor:r2(isrRet-isr), isrPagar:r2(Math.max(0,isr-isrRet)),
       gastos:gastos, cuentan:cuentan, revisar:revisar, personales:personales, anual:r2(anual)
     };
@@ -782,6 +930,111 @@
     }
   }
 
+  function renderAnio(){
+    var anio = mesActual.slice(0,4);
+    var a = resumenAnual(anio);
+    var body = $("anio-body");
+    body.innerHTML = "";
+
+    $("anio-resumen").textContent = anio + (a.deducciones > 0 ? " · " + money(a.deducciones) + " deducibles" : "");
+
+    /* --- deducción personal --- */
+    var b1=document.createElement("div"); b1.className="bloque";
+    var t1=document.createElement("div"); t1.className="titulo"; t1.textContent="Deducciones personales de "+anio;
+    b1.appendChild(t1);
+
+    if(a.deducciones <= 0){
+      var vacio=document.createElement("p"); vacio.className="hint";
+      vacio.textContent="Todavía no registras gastos médicos, seguros de gastos médicos, colegiaturas ni aportaciones al retiro. Son los que se descuentan de tu ISR de sueldos en la anual, y valen bastante más que el IVA.";
+      b1.appendChild(vacio);
+    } else {
+      var big=document.createElement("div"); big.className="cifra-grande";
+      big.textContent = a.sueldo > 0 ? money(a.ahorro) : money(a.deducciones);
+      b1.appendChild(big);
+
+      var sub=document.createElement("p"); sub.className="hint";
+      if(a.sueldo > 0){
+        sub.innerHTML = "Es lo que dejarías de pagar de ISR en tu declaración anual, aplicando <b>"+money(a.aplicable)+"</b> de "+
+          money(a.deducciones)+" acumulados en "+a.cuantas+" factura"+(a.cuantas===1?"":"s")+".";
+      } else {
+        sub.textContent = "Acumulados en "+a.cuantas+" factura"+(a.cuantas===1?"":"s")+". Dime tu sueldo anual y te calculo cuánto valen.";
+      }
+      b1.appendChild(sub);
+
+      var kv=document.createElement("div"); kv.className="kv";
+      [["Acumulado", money(a.deducciones)],
+       ["Tope del año", money(a.tope)],
+       ["Se aplicaría", money(a.aplicable)]].forEach(function(par){
+        var d=document.createElement("div");
+        var k=document.createElement("span"); k.className="k"; k.textContent=par[0];
+        var v=document.createElement("span"); v.className="v"; v.textContent=par[1];
+        d.appendChild(k); d.appendChild(v); kv.appendChild(d);
+      });
+      b1.appendChild(kv);
+    }
+
+    var row=document.createElement("div"); row.className="sueldo-row";
+    var lab=document.createElement("label");
+    lab.appendChild(document.createTextNode("Tu sueldo anual bruto, aproximado"));
+    var inp=document.createElement("input");
+    inp.type="number"; inp.step="0.01"; inp.min="0"; inp.placeholder="0.00";
+    inp.value = a.sueldo ? a.sueldo.toFixed(2) : "";
+    inp.addEventListener("change", function(){
+      var v=parseFloat(inp.value); state.sueldoAnual = isNaN(v) ? 0 : v;
+      save(); render();
+    });
+    lab.appendChild(inp); row.appendChild(lab);
+    b1.appendChild(row);
+
+    var nota=document.createElement("p"); nota.className="fine";
+    nota.textContent = "El tope es el menor entre el 15% de tus ingresos totales ("+money(a.topeQuince)+
+      ") y 5 UMA anuales ("+money(TOPE_UMA)+"). Las colegiaturas y las aportaciones al retiro llevan topes propios que aquí no se separan, y todo debe estar pagado con medio electrónico. Es una estimación: confírmala con tu contador.";
+    b1.appendChild(nota);
+    body.appendChild(b1);
+
+    /* --- mes por mes --- */
+    if(a.serie.length){
+      var b2=document.createElement("div"); b2.className="bloque";
+      var t2=document.createElement("div"); t2.className="titulo"; t2.textContent="Mes por mes";
+      b2.appendChild(t2);
+
+      var wrap=document.createElement("div"); wrap.className="tabla-scroll";
+      var tab=document.createElement("table"); tab.className="anio";
+      var thead=document.createElement("thead"); var trh=document.createElement("tr");
+      ["Mes","Facturado","IVA a cargo","Acreditado","Pagas","A favor"].forEach(function(h){
+        var th=document.createElement("th"); th.textContent=h; trh.appendChild(th);
+      });
+      thead.appendChild(trh); tab.appendChild(thead);
+
+      var tb=document.createElement("tbody");
+      var tot={base:0,aCargo:0,acred:0,aPagar:0};
+      a.serie.forEach(function(f){
+        var tr=document.createElement("tr");
+        var celdas=[
+          monthName(f.mes).replace(" "+f.mes.slice(0,4),""),
+          money(f.base), money(f.aCargo), money(f.acred),
+          f.aPagar>0?money(f.aPagar):"—",
+          f.saldo>0?money(f.saldo):"—"
+        ];
+        celdas.forEach(function(txt,i){
+          var td=document.createElement("td"); td.textContent=txt;
+          if(i===4 && f.aPagar>0) td.className="neg";
+          if(i===5 && f.saldo>0) td.className="pos";
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+        tot.base+=f.base; tot.aCargo+=f.aCargo; tot.acred+=f.acred; tot.aPagar+=f.aPagar;
+      });
+      var trt=document.createElement("tr"); trt.className="total";
+      [anio, money(tot.base), money(tot.aCargo), money(tot.acred), money(tot.aPagar), ""].forEach(function(txt){
+        var td=document.createElement("td"); td.textContent=txt; trt.appendChild(td);
+      });
+      tb.appendChild(trt);
+      tab.appendChild(tb); wrap.appendChild(tab); b2.appendChild(wrap);
+      body.appendChild(b2);
+    }
+  }
+
   function render(){
     $("setup").hidden = !!state.rfc;
     var m = metrics();
@@ -814,8 +1067,11 @@
     t += m.isrPagar > 0
       ? ("así que sales a pagar <b>" + money(m.isrPagar) + "</b> de ISR.")
       : ("así que de ISR no pagas nada" + (m.favor>0 ? (" — de hecho te retienen <b>" + money(m.favor) + "</b> de más.") : "."));
+    if(m.arrastre > 0){
+      t += " Traías <b>" + money(m.arrastre) + "</b> de IVA a favor de meses anteriores, ya está aplicado.";
+    }
     if(m.sobrante > 0){
-      t += " Llevas <b>" + money(m.sobrante) + "</b> de IVA de más: se acredita en los meses que siguen.";
+      t += " Te quedan <b>" + money(m.sobrante) + "</b> de IVA a favor para el mes que entra.";
     }
     $("isrline").innerHTML = t;
 
@@ -825,8 +1081,10 @@
     var an=$("anual");
     if(m.anual > 0){
       an.hidden=false;
-      an.innerHTML="<b>"+money(m.anual)+"</b> de este mes no cuentan para tu IVA, pero son deducción personal: valen en tu declaración anual, contra tu sueldo.";
+      an.innerHTML="<b>"+money(m.anual)+"</b> de este mes no cuentan para tu IVA, pero son deducción personal: se acumulan para tu declaración anual, abajo.";
     } else { an.hidden=true; }
+
+    renderAnio();
 
     var count=Object.keys(state.reglas).length;
     $("learned").textContent = count ? (count + (count===1?" proveedor aprendido":" proveedores aprendidos")) : "";
@@ -1048,6 +1306,7 @@
         if(!s || typeof s!=="object") throw new Error("bad");
         state.rfc=(s.rfc||"").toUpperCase();
         state.ingresoDefault=Number(s.ingresoDefault)||DEF_ING;
+        state.sueldoAnual=Number(s.sueldoAnual)||0;
         state.ingresos=Array.isArray(s.ingresos)?s.ingresos:[];
         state.gastos=Array.isArray(s.gastos)?s.gastos:[];
         state.gastos.forEach(function(g){ delete g._c; });
