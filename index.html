@@ -5,142 +5,274 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mis facturas del mes</title>
 <meta name="description" content="Registro personal de facturas: cuánto te falta facturar y cuánto pagarías de IVA.">
-<meta name="theme-color" content="#F2F4F0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0E1211" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F1F3EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D1110" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%BE%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <style>
   :root{
-    --bg:#F2F4F0; --surface:#FBFCFA; --surface-2:#EAEDE7;
-    --ink:#141918; --ink-2:#4C5654; --ink-3:#78827F;
-    --rule:#D8DDD5; --accent:#155F4C; --accent-soft:#E1EBE5;
-    --crit:#A33520; --crit-soft:#F6E4DF;
-    --warn:#8A6410; --warn-soft:#F5EBD6;
-    --info:#2B5878; --info-soft:#E1E9EF;
-    --f-display:"Newsreader",Georgia,serif;
+    --bg:#F1F3EF;
+    --surface:#FCFDFB;
+    --surface-2:#E8EBE5;
+    --ink:#131817;
+    --ink-2:#4E5856;
+    --ink-3:#7C8683;
+    --rule:#DEE2DA;
+    --rule-2:#EAEDE6;
+    --accent:#14604D;
+    --accent-2:#1D7A62;
+    --accent-soft:#E2EDE7;
+    --crit:#A03A22;
+    --crit-soft:#F7E6E0;
+    --warn:#8A6410;
+    --warn-soft:#F6ECD8;
+    --info:#2C5A79;
+    --info-soft:#E3EAF0;
+    --shadow:0 1px 2px rgba(19,24,23,.04), 0 12px 28px -22px rgba(19,24,23,.5);
+
+    --f-display:"Newsreader",Georgia,"Times New Roman",serif;
     --f-body:"Public Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
-    --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+    --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+    --s1:6px; --s2:10px; --s3:16px; --s4:24px; --s5:36px; --s6:52px;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#0E1211; --surface:#161B1A; --surface-2:#1E2523;
-      --ink:#E9EEEB; --ink-2:#9DA8A4; --ink-3:#77827E;
-      --rule:#28302E; --accent:#67C3A6; --accent-soft:#14302A;
-      --crit:#E38A6E; --crit-soft:#3A211A;
-      --warn:#D5AC55; --warn-soft:#33290F;
-      --info:#8FB6D1; --info-soft:#17272F;
+      --bg:#0D1110; --surface:#161B1A; --surface-2:#1E2422;
+      --ink:#EAEFEC; --ink-2:#9EA9A5; --ink-3:#76817D;
+      --rule:#28302E; --rule-2:#212927;
+      --accent:#6BC7A9; --accent-2:#8FD9C0; --accent-soft:#15302A;
+      --crit:#E58A6D; --crit-soft:#38201A;
+      --warn:#D6AC56; --warn-soft:#32290F;
+      --info:#90B7D2; --info-soft:#17272F;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -22px rgba(0,0,0,1);
     }
   }
   :root[data-theme="dark"]{
-    --bg:#0E1211; --surface:#161B1A; --surface-2:#1E2523;
-    --ink:#E9EEEB; --ink-2:#9DA8A4; --ink-3:#77827E;
-    --rule:#28302E; --accent:#67C3A6; --accent-soft:#14302A;
-    --crit:#E38A6E; --crit-soft:#3A211A;
-    --warn:#D5AC55; --warn-soft:#33290F;
-    --info:#8FB6D1; --info-soft:#17272F;
+    --bg:#0D1110; --surface:#161B1A; --surface-2:#1E2422;
+    --ink:#EAEFEC; --ink-2:#9EA9A5; --ink-3:#76817D;
+    --rule:#28302E; --rule-2:#212927;
+    --accent:#6BC7A9; --accent-2:#8FD9C0; --accent-soft:#15302A;
+    --crit:#E58A6D; --crit-soft:#38201A;
+    --warn:#D6AC56; --warn-soft:#32290F;
+    --info:#90B7D2; --info-soft:#17272F;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 30px -22px rgba(0,0,0,1);
   }
+
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html{color-scheme:light dark}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;padding:0 18px 80px;-webkit-font-smoothing:antialiased}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--f-body);font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;padding:0 20px 96px;
+  }
   img{max-width:100%}
-  .wrap{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:22px;padding-top:34px}
-  h1{font-family:var(--f-display);font-size:30px;font-weight:600;margin:0;letter-spacing:-.02em}
-  .sub{color:var(--ink-2);font-size:15px;margin:0}
-  .eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
-  button{font-family:inherit;font-size:14px;cursor:pointer}
-  input,select{font-family:inherit;font-size:15px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);padding:9px 10px;border-radius:3px;width:100%}
-  input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .wrap{max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:var(--s4);padding-top:var(--s5)}
+  .num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+  .eyebrow{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3)}
+  p{margin:0}
 
-  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
-  .monthsel{display:flex;align-items:center;gap:8px}
-  .monthsel select{width:auto;padding:6px 8px;font-size:13px;font-family:var(--f-mono)}
+  button{font-family:inherit;font-size:14px;cursor:pointer;color:inherit}
+  input,select{
+    font-family:inherit;font-size:15px;background:var(--surface);color:var(--ink);
+    border:1px solid var(--rule);padding:10px 11px;border-radius:6px;width:100%;
+  }
+  input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;
+  }
+  .btn{
+    background:var(--accent);color:var(--bg);border:1px solid var(--accent);
+    padding:10px 18px;border-radius:6px;font-weight:600;letter-spacing:.005em;
+    transition:filter .15s ease;
+  }
+  .btn:hover{filter:brightness(1.12)}
+  .btn.ghost{background:transparent;color:var(--ink-2);border-color:var(--rule)}
+  .btn.ghost:hover{color:var(--ink);border-color:var(--ink-3);filter:none}
+  .btn.sm{padding:7px 13px;font-size:13px}
 
-  .setup{background:var(--accent-soft);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:16px;display:flex;flex-direction:column;gap:10px}
-  .setup .t{font-family:var(--f-display);font-size:19px;font-weight:600}
-  .setup .d{font-size:13.5px;color:var(--ink-2)}
-  .setup .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .setup input{max-width:230px;text-transform:uppercase}
+  /* ---------- encabezado ---------- */
+  .top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+  h1{font-family:var(--f-display);font-size:27px;font-weight:500;margin:0;letter-spacing:-.015em}
+  .monthsel{position:relative;display:inline-flex;align-items:center}
+  .monthsel select{
+    width:auto;padding:6px 30px 6px 12px;font-size:13px;font-family:var(--f-mono);
+    border-radius:999px;background:var(--surface-2);border-color:transparent;
+    appearance:none;-webkit-appearance:none;cursor:pointer;
+  }
+  .monthsel::after{
+    content:"";position:absolute;right:13px;top:50%;width:6px;height:6px;
+    border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none;
+  }
 
-  .board{background:var(--surface);border:1px solid var(--rule);padding:22px;display:flex;flex-direction:column;gap:18px}
-  .headline{font-family:var(--f-mono);font-size:clamp(25px,5.6vw,34px);font-weight:600;letter-spacing:-.03em;line-height:1.12}
-  .headline .unit{font-size:.55em;color:var(--ink-3);font-weight:500}
-  .headline-lbl{font-size:14px;color:var(--ink-2)}
-  .bar{height:12px;background:var(--surface-2);border:1px solid var(--rule);border-radius:2px;overflow:hidden}
-  .bar > i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s ease}
-  .barmeta{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:var(--ink-3);gap:12px}
-  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
-  .cell{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:3px}
-  .cell .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-  .cell .v{font-family:var(--f-mono);font-size:20px;font-weight:600;letter-spacing:-.02em}
-  .cell .d{font-size:12.5px;color:var(--ink-3);line-height:1.35}
-  .cell.pay .v{color:var(--crit)}
-  .cell.done .v{color:var(--accent)}
-  .isrline{font-size:13.5px;color:var(--ink-2);border-top:1px solid var(--rule);padding-top:14px;margin:0}
-  .isrline b{font-weight:600;color:var(--ink)}
+  /* ---------- setup ---------- */
+  .setup{
+    background:var(--accent-soft);border-radius:10px;padding:var(--s4);
+    display:flex;flex-direction:column;gap:var(--s2);
+  }
+  .setup .t{font-family:var(--f-display);font-size:20px;font-weight:600}
+  .setup .d{font-size:14px;color:var(--ink-2);max-width:52ch}
+  .setup .row{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;margin-top:var(--s1)}
+  .setup input{max-width:240px;text-transform:uppercase;font-family:var(--f-mono);letter-spacing:.04em}
 
-  .ingreso{border:1px solid var(--rule);background:var(--surface)}
-  .ingreso .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--rule)}
-  .ingreso .bd{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-  .kv > div{display:flex;flex-direction:column;gap:2px}
-  .kv .k{font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
-  .kv .v{font-family:var(--f-mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
-  .ingreso .who{font-size:13px;color:var(--ink-2);display:flex;justify-content:space-between;gap:10px;align-items:center}
-  .est{background:var(--warn-soft);border-left:3px solid var(--warn);padding:11px 14px;font-size:13px;color:var(--ink-2)}
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--surface);border-radius:12px;box-shadow:var(--shadow);
+    padding:var(--s4) var(--s4) 0;display:flex;flex-direction:column;
+  }
+  .hero .lede{display:flex;flex-direction:column;gap:2px}
+  .hero .big{
+    font-family:var(--f-mono);font-variant-numeric:tabular-nums;
+    font-size:clamp(34px,9vw,52px);font-weight:600;letter-spacing:-.045em;line-height:1.05;
+  }
+  .hero .big .unit{font-family:var(--f-body);font-size:.34em;font-weight:400;color:var(--ink-3);letter-spacing:0}
+  .hero.done .big{color:var(--accent);font-family:var(--f-display);font-size:clamp(28px,6.5vw,38px);letter-spacing:-.02em}
 
-  .drop{border:1.5px dashed var(--rule);background:var(--surface);padding:24px 20px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;transition:border-color .15s,background .15s}
+  .track{margin-top:var(--s4);display:flex;flex-direction:column;gap:var(--s1)}
+  .bar{height:10px;background:var(--surface-2);border-radius:999px;overflow:hidden}
+  .bar > i{display:block;height:100%;width:0;border-radius:999px;background:var(--accent);transition:width .45s cubic-bezier(.2,.7,.3,1)}
+  .barmeta{display:flex;justify-content:space-between;gap:var(--s3);font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .barmeta b{color:var(--ink-2);font-weight:500}
+
+  .stats{display:flex;gap:0;margin-top:var(--s4);border-top:1px solid var(--rule-2)}
+  .stat{flex:1;padding:var(--s3) 0;display:flex;flex-direction:column;gap:1px;position:relative}
+  .stat + .stat{padding-left:var(--s3)}
+  .stat + .stat::before{content:"";position:absolute;left:0;top:var(--s3);bottom:var(--s3);width:1px;background:var(--rule-2)}
+  .stat .k{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  .stat .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:18px;font-weight:600;letter-spacing:-.025em}
+  .stat.pay .v{color:var(--crit)}
+  .stat.pay.zero .v{color:var(--accent)}
+  @media(max-width:460px){
+    .stats{flex-wrap:wrap}
+    .stat{flex:1 1 45%}
+    .stat + .stat::before{display:none}
+    .stat + .stat{padding-left:0}
+  }
+
+  .hero .foot{
+    border-top:1px solid var(--rule-2);margin-top:0;padding:var(--s3) 0 var(--s4);
+    font-size:13px;color:var(--ink-3);line-height:1.5;
+  }
+  .hero .foot b{color:var(--ink-2);font-weight:500;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+  /* ---------- base del mes ---------- */
+  details.base{border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}
+  details.base > summary{
+    cursor:pointer;list-style:none;padding:14px var(--s4);
+    display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
+  }
+  details.base > summary::-webkit-details-marker{display:none}
+  .base .lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3)}
+  .base .amt{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;font-size:15px}
+  .base .tag{
+    font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    padding:2px 8px;border-radius:999px;
+  }
+  .base .tag.est{background:var(--warn-soft);color:var(--warn)}
+  .base .tag.real{background:var(--accent-soft);color:var(--accent)}
+  .base .chev{margin-left:auto;color:var(--ink-3);font-size:12px;font-family:var(--f-mono)}
+  details.base[open] .chev::after{content:"cerrar"}
+  details.base:not([open]) .chev::after{content:"ver detalle"}
+  .base .body{padding:0 var(--s4) var(--s4);display:flex;flex-direction:column;gap:var(--s3);border-top:1px solid var(--rule-2);padding-top:var(--s3)}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:var(--s3)}
+  .kv > div{display:flex;flex-direction:column;gap:1px}
+  .kv .k{font-family:var(--f-mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+  .kv .v{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:15px;font-weight:600}
+  .who{font-size:13.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:var(--s2);align-items:center}
+  .hint{font-size:13px;color:var(--ink-3);line-height:1.5}
+
+  /* ---------- drop ---------- */
+  .drop{
+    border:1.5px dashed var(--rule);border-radius:12px;background:transparent;
+    padding:var(--s5) var(--s4);text-align:center;
+    display:flex;flex-direction:column;gap:var(--s2);align-items:center;
+    transition:border-color .15s ease,background .15s ease;
+  }
   .drop.over{border-color:var(--accent);background:var(--accent-soft)}
-  .drop .t{font-family:var(--f-display);font-size:19px;font-weight:600}
-  .drop .d{font-size:13.5px;color:var(--ink-2);max-width:52ch}
-  .btn{background:var(--accent);color:var(--bg);border:0;padding:9px 16px;border-radius:3px;font-weight:600}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--rule)}
-  .btn.sm{padding:6px 11px;font-size:13px}
+  .drop .t{font-family:var(--f-display);font-size:21px;font-weight:600}
+  .drop .d{font-size:13.5px;color:var(--ink-2);max-width:46ch;line-height:1.5}
+  .drop .acts{display:flex;gap:var(--s2);flex-wrap:wrap;justify-content:center;margin-top:var(--s2)}
+  .drop.slim{padding:var(--s3) var(--s4);flex-direction:row;justify-content:space-between;text-align:left;flex-wrap:wrap}
+  .drop.slim .t{font-size:16px}
+  .drop.slim .d,.drop.slim .sep{display:none}
+  .drop.slim .acts{margin-top:0}
 
-  form.add{background:var(--surface);border:1px solid var(--rule);padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* ---------- alta manual ---------- */
+  form.add{
+    background:var(--surface);border-radius:10px;box-shadow:var(--shadow);padding:var(--s4);
+    display:grid;grid-template-columns:1fr 1fr;gap:var(--s3);
+  }
   form.add .full{grid-column:1/-1}
-  form.add label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--ink-3);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
-  .rowbtns{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end}
+  form.add label{display:flex;flex-direction:column;gap:5px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+  .rowbtns{grid-column:1/-1;display:flex;gap:var(--s2);justify-content:flex-end}
   @media(max-width:560px){form.add{grid-template-columns:1fr}}
 
-  .list{border:1px solid var(--rule);background:var(--surface)}
-  .item{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:start;padding:13px 16px;border-bottom:1px solid var(--rule)}
+  /* ---------- lista ---------- */
+  .section-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--s3);margin-bottom:var(--s2)}
+  .section-head .count{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
+  .list{background:var(--surface);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+  .item{padding:14px var(--s4);border-bottom:1px solid var(--rule-2);transition:background .12s ease}
   .item:last-child{border-bottom:0}
-  .item .who{display:flex;flex-direction:column;gap:4px;min-width:0}
-  .item .who .n{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .item .who .m{font-size:12px;color:var(--ink-3);font-family:var(--f-mono)}
-  .item .who .why{font-size:12.5px;color:var(--ink-2)}
-  .item .amt{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap;display:flex;flex-direction:column;gap:2px;padding-top:1px}
-  .item .amt .a{font-weight:600}
-  .item .amt .b{font-size:12px;color:var(--accent)}
-  .item .amt .b.zero{color:var(--ink-3)}
-  .badge{display:inline-block;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid transparent}
-  .b-ok{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
-  .b-part{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
-  .b-no{background:var(--surface-2);color:var(--ink-3);border-color:var(--rule)}
-  .b-rev{background:var(--crit-soft);color:var(--crit);border-color:var(--crit)}
-  .b-anual{background:var(--info-soft);color:var(--info);border-color:var(--info)}
-  .item select{width:auto;font-size:12px;padding:4px 6px;margin-top:5px;max-width:210px}
-  .x{background:none;border:0;color:var(--ink-3);font-size:18px;line-height:1;padding:2px 5px}
-  .x:hover{color:var(--crit)}
-  .empty{padding:26px 16px;text-align:center;color:var(--ink-3);font-size:14px}
-  .anual{font-size:13px;color:var(--ink-2);border:1px solid var(--rule);border-left:3px solid var(--info);background:var(--surface);padding:12px 14px}
+  .item:hover{background:var(--surface-2)}
+  .item .row1{display:flex;align-items:center;gap:var(--s2)}
+  .item .name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+  .item .money{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .item .row2{display:flex;align-items:center;gap:var(--s2);margin-top:3px;flex-wrap:wrap}
+  .item .meta{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+  .item .why{font-size:12.5px;color:var(--ink-3)}
+  .item .credit{font-family:var(--f-mono);font-size:12px;color:var(--accent);margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .item .credit.zero{color:var(--ink-3)}
+  .item .x{
+    background:none;border:0;color:var(--ink-3);font-size:16px;line-height:1;
+    padding:6px;border-radius:6px;opacity:0;transition:opacity .12s ease,color .12s ease;
+  }
+  .item:hover .x,.item:focus-within .x{opacity:1}
+  .item .x:hover{color:var(--crit);background:var(--crit-soft)}
+  @media(hover:none){.item .x{opacity:1}}
 
-  .foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3)}
-  .foot .acts{display:flex;gap:8px;flex-wrap:wrap}
-  .status{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3)}
-  details.cfg{border:1px solid var(--rule);background:var(--surface)}
-  details.cfg summary{cursor:pointer;padding:11px 16px;font-family:var(--f-mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);list-style:none}
-  details.cfg summary::-webkit-details-marker{display:none}
-  details.cfg summary::before{content:"+ ";color:var(--accent)}
-  details.cfg[open] summary::before{content:"– "}
-  details.cfg .inner{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px;font-size:13.5px;color:var(--ink-2)}
-  details.cfg label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--ink-3);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
-  details.cfg p{margin:0}
-  .note{background:var(--warn-soft);border-left:3px solid var(--warn);padding:12px 14px;font-size:13px;color:var(--ink-2)}
+  .badge{
+    font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;
+    padding:3px 9px;border-radius:999px;border:1px solid transparent;background:none;white-space:nowrap;
+  }
+  button.badge{cursor:pointer}
+  button.badge:hover{filter:brightness(.97)}
+  .b-ok{background:var(--accent-soft);color:var(--accent)}
+  .b-part{background:var(--warn-soft);color:var(--warn)}
+  .b-no{background:var(--surface-2);color:var(--ink-3)}
+  .b-rev{background:var(--crit-soft);color:var(--crit)}
+  .b-anual{background:var(--info-soft);color:var(--info)}
+  .item select{width:100%;max-width:340px;font-size:13px;padding:7px 9px;margin-top:var(--s2)}
+
+  .empty{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-3);font-size:14px}
+  .anual{
+    font-size:13.5px;color:var(--ink-2);line-height:1.5;
+    background:var(--info-soft);border-radius:10px;padding:14px var(--s4);
+  }
+  .anual b{color:var(--ink);font-weight:600}
+
+  /* ---------- pie ---------- */
+  .foot-bar{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap}
+  .foot-bar .acts{display:flex;gap:var(--s2);flex-wrap:wrap}
+  .status{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-3);min-height:18px}
+
+  details.cfg{border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}
+  details.cfg > summary{
+    cursor:pointer;list-style:none;padding:13px var(--s4);
+    font-family:var(--f-mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+  }
+  details.cfg > summary::-webkit-details-marker{display:none}
+  details.cfg > summary::before{content:"+ ";color:var(--accent)}
+  details.cfg[open] > summary::before{content:"– "}
+  details.cfg .inner{padding:0 var(--s4) var(--s4);display:flex;flex-direction:column;gap:var(--s3);font-size:13.5px;color:var(--ink-2);border-top:1px solid var(--rule-2);padding-top:var(--s3)}
+  details.cfg label{display:flex;flex-direction:column;gap:5px;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);max-width:320px}
+  details.cfg p{line-height:1.55}
+  .note{background:var(--warn-soft);border-radius:8px;padding:13px 15px;font-size:13px;color:var(--ink-2);line-height:1.5}
+  .fine{font-size:12.5px;color:var(--ink-3)}
+
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -148,63 +280,59 @@
 
 <div class="wrap">
 
-  <div class="top">
-    <div>
-      <h1>Mis facturas del mes</h1>
-      <p class="sub">Arrastra tus XML: la tuya fija la base, las de gastos se clasifican solas.</p>
-    </div>
-    <div class="monthsel">
-      <span class="eyebrow">Mes</span>
-      <select id="mes" aria-label="Mes"></select>
-    </div>
-  </div>
+  <header class="top">
+    <h1>Mis facturas del mes</h1>
+    <span class="monthsel"><select id="mes" aria-label="Mes"></select></span>
+  </header>
 
-  <div class="setup" id="setup" hidden>
+  <section class="setup" id="setup" hidden>
     <span class="t">Empecemos con tu RFC</span>
-    <span class="d">Lo necesito para dos cosas: distinguir tu factura de ingresos de las de gastos, y avisarte cuando una factura no venga a tu nombre. Se queda en este navegador; no se manda a ningún lado.</span>
+    <span class="d">Lo necesito para distinguir tu factura de ingresos de las de gastos, y para avisarte cuando una factura no venga a tu nombre. Se queda en este navegador.</span>
     <div class="row">
       <input id="setup-rfc" placeholder="TURFC000000XXX" autocomplete="off" spellcheck="false">
       <button class="btn" id="setup-ok" type="button">Guardar</button>
     </div>
-  </div>
+  </section>
 
-  <div class="ingreso">
-    <div class="hd">
-      <span class="eyebrow">Lo que facturaste este mes</span>
-      <span class="eyebrow" id="ing-src">sin factura</span>
+  <section class="hero" id="hero">
+    <div class="lede">
+      <span class="eyebrow" id="lead-lbl">Te falta facturar</span>
+      <span class="big" id="lead">$0.00</span>
     </div>
-    <div class="bd" id="ing-body"></div>
-  </div>
-
-  <div class="board">
-    <div>
-      <div class="headline-lbl" id="lead-lbl">Te falta facturar</div>
-      <div class="headline" id="lead">$0.00 <span class="unit">de compras</span></div>
-    </div>
-    <div>
-      <div class="bar"><i id="bar"></i></div>
+    <div class="track">
+      <div class="bar" role="progressbar" aria-labelledby="lead-lbl" id="barwrap"><i id="bar"></i></div>
       <div class="barmeta">
-        <span id="bar-l">$0.00 acreditable</span>
-        <span id="bar-r">meta $0.00</span>
+        <span><b id="bar-l">$0.00</b> acreditable</span>
+        <span>meta <b id="bar-r">$0.00</b></span>
       </div>
     </div>
-    <div class="grid3">
-      <div class="cell"><span class="k">Gastos del mes</span><span class="v" id="c-num">0</span><span class="d" id="c-num-d">registrados</span></div>
-      <div class="cell"><span class="k">IVA acreditable</span><span class="v" id="c-iva">$0.00</span><span class="d">de los que sí aplican</span></div>
-      <div class="cell pay" id="cell-pay"><span class="k">Pagarías hoy</span><span class="v" id="c-pay">$0.00</span><span class="d">de IVA el día 17</span></div>
+    <div class="stats">
+      <div class="stat"><span class="k">Gastos</span><span class="v" id="c-num">0</span></div>
+      <div class="stat"><span class="k">IVA acreditable</span><span class="v" id="c-iva">$0.00</span></div>
+      <div class="stat pay" id="stat-pay"><span class="k">Pagarías hoy</span><span class="v" id="c-pay">$0.00</span></div>
     </div>
-    <p class="isrline" id="isrline"></p>
-  </div>
+    <p class="foot" id="isrline"></p>
+  </section>
 
-  <div class="drop" id="drop">
+  <details class="base" id="base">
+    <summary>
+      <span class="lbl">Base del mes</span>
+      <span class="amt" id="base-amt">$0.00</span>
+      <span class="tag est" id="base-tag">estimada</span>
+      <span class="chev"></span>
+    </summary>
+    <div class="body" id="base-body"></div>
+  </details>
+
+  <section class="drop" id="drop">
     <span class="t">Arrastra aquí tus XML</span>
-    <span class="d">Si la factura la emitiste tú, va a la base del mes. Si es un gasto, la leo y decido sola si aplica. Si solo tienes el PDF, agrégala a mano.</span>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+    <span class="d">Si la factura la emitiste tú, fija la base del mes. Si es un gasto, la leo y decido si aplica.</span>
+    <div class="acts">
       <button class="btn" id="pick" type="button">Elegir archivos</button>
       <button class="btn ghost" id="manual" type="button">Agregar a mano</button>
     </div>
     <input type="file" id="file" accept=".xml,text/xml,application/xml" multiple hidden>
-  </div>
+  </section>
 
   <form class="add" id="form" hidden>
     <label class="full">Proveedor<input id="f-prov" placeholder="Ej. Uber, Office Depot" required></label>
@@ -218,14 +346,17 @@
     </div>
   </form>
 
-  <div>
-    <div class="eyebrow" style="margin-bottom:8px">Gastos registrados</div>
-    <div class="list" id="list"><div class="empty">Todavía no agregas nada este mes.</div></div>
-  </div>
+  <section>
+    <div class="section-head">
+      <span class="eyebrow">Gastos del mes</span>
+      <span class="count" id="resumen"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
 
-  <div class="anual" id="anual" hidden></div>
+  <p class="anual" id="anual" hidden></p>
 
-  <div class="foot">
+  <div class="foot-bar">
     <span class="status" id="status">&nbsp;</span>
     <span class="acts">
       <button class="btn ghost sm" id="csv" type="button">CSV del mes</button>
@@ -239,12 +370,12 @@
     <summary>Tus datos y cómo se calcula</summary>
     <div class="inner">
       <label>Tu RFC<input id="cfg-rfc" placeholder="TURFC000000XXX" autocomplete="off" spellcheck="false"></label>
-      <label>Base estimada si aún no subes tu factura del mes<input id="cfg-ing" type="number" step="0.01" min="0"></label>
-      <p>De lo que facturas cobras <strong>16% de IVA</strong> y tu cliente persona moral te retiene <strong>dos terceras partes</strong>. Lo que queda a tu cargo es lo único que sales a pagar, y las facturas de gastos lo van bajando peso por peso.</p>
+      <label>Base estimada mientras no subas tu factura<input id="cfg-ing" type="number" step="0.01" min="0"></label>
+      <p>De lo que facturas cobras <strong>16% de IVA</strong> y tu cliente persona moral te retiene <strong>dos terceras partes</strong>. Lo que queda a tu cargo es lo único que sales a pagar, y las facturas de gastos lo bajan peso por peso.</p>
       <div class="note">Ningún gasto baja tu ISR: en RESICO se calcula sobre lo que facturas, sin deducciones. Las facturas de gastos solo sirven para el IVA. Los gastos médicos, seguros o colegiaturas no cuentan aquí — cuentan en tu declaración anual, contra tu sueldo.</div>
-      <p>Cuando corrijas la clasificación de un proveedor, la recuerdo y la aplico sola la próxima vez. <button class="btn ghost sm" id="forget" type="button">Olvidar lo aprendido</button> <span id="learned"></span></p>
-      <p>Todo vive en el almacenamiento de <strong>este navegador</strong>. Si borras los datos del sitio, se va. Baja un <strong>Respaldo</strong> de vez en cuando.</p>
-      <p style="font-size:12.5px;color:var(--ink-3)">Estimación para orientarte, no un cálculo fiscal. Confirma con tu contador antes de declarar.</p>
+      <p>Cuando corrijas la clasificación de un proveedor, la recuerdo y la aplico sola la próxima vez. <button class="btn ghost sm" id="forget" type="button">Olvidar lo aprendido</button> <span class="fine" id="learned"></span></p>
+      <p class="fine">Todo vive en el almacenamiento de este navegador. Si borras los datos del sitio, se va: baja un respaldo de vez en cuando.</p>
+      <p class="fine">Estimación para orientarte, no un cálculo fiscal. Confirma con tu contador antes de declarar.</p>
     </div>
   </details>
 
@@ -309,10 +440,15 @@
     var p=k.split("-"); var n=nombres[parseInt(p[1],10)-1]||p[1];
     return n.charAt(0).toUpperCase()+n.slice(1)+" "+p[0];
   };
-  var norm = function(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); };
+  var norm = function(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); };
   var uid = function(p){ return p + Date.now().toString(36) + Math.random().toString(36).slice(2,6); };
 
-  function status(t){ $("status").textContent = t || " "; }
+  var statusTimer = null;
+  function status(t){
+    $("status").textContent = t || " ";
+    clearTimeout(statusTimer);
+    if(t) statusTimer = setTimeout(function(){ $("status").textContent = " "; }, 6000);
+  }
 
   function save(){
     try{
@@ -320,7 +456,6 @@
         rfc:state.rfc, ingresoDefault:state.ingresoDefault,
         ingresos:state.ingresos, gastos:state.gastos, reglas:state.reglas
       }));
-      status("guardado");
     }catch(e){ status("no pude guardar en este navegador"); }
   }
 
@@ -351,13 +486,13 @@
   function clasificar(g){
     var rfc = (g.emisorRfc||"").toUpperCase();
     if(g.receptorRfc && state.rfc && g.receptorRfc.toUpperCase() !== state.rfc){
-      return { tipo:"revisar", motivo:"Esta factura no está a tu nombre — no la puedes acreditar" };
+      return { tipo:"revisar", motivo:"No está a tu nombre — no la puedes acreditar" };
     }
     if(g.formaPago === "01" && (Number(g.total)||0) > 2000){
-      return { tipo:"revisar", motivo:"Pagada en efectivo por más de $2,000 — no acredita IVA" };
+      return { tipo:"revisar", motivo:"Efectivo por más de $2,000 — no acredita IVA" };
     }
     if(!(Number(g.iva)||0)){
-      return { tipo:"personal", motivo:"La factura no trae IVA desglosado" };
+      return { tipo:"personal", motivo:"No trae IVA desglosado" };
     }
     if(rfc && state.reglas[rfc]){
       return { tipo: state.reglas[rfc], motivo:"Lo aprendí de una corrección tuya" };
@@ -411,12 +546,13 @@
     var aCargo = r2(trasladado - retenido);
 
     var gastos = state.gastos.filter(function(g){ return monthKey(g.fecha) === mesActual; });
-    var acred=0, cuentan=0, revisar=0, anual=0;
+    var acred=0, cuentan=0, revisar=0, personales=0, anual=0;
     gastos.forEach(function(g){
       var c = tipoDe(g); var t = TIPOS[c.tipo] || TIPOS.revisar;
       var v = r2((Number(g.iva)||0) * t.prop);
       if(v>0){ acred += v; cuentan++; }
       if(c.tipo === "revisar") revisar++;
+      if(c.tipo === "personal") personales++;
       if(c.tipo === "anual") anual += Number(g.total) || ((Number(g.subtotal)||0)+(Number(g.iva)||0));
     });
     acred = r2(acred);
@@ -425,10 +561,10 @@
 
     return {
       real:real, ingresos:ing, base:base, trasladado:trasladado, retenido:retenido, isrRet:isrRet,
-      aCargo:aCargo, acred:acred, restante:restante,
+      aCargo:aCargo, acred:acred, restante:restante, sobrante:r2(Math.max(0, acred - aCargo)),
       faltaBase:r2(restante/0.16), pct: aCargo>0 ? Math.min(100,(acred/aCargo)*100) : 0,
       isr:isr, favor:r2(isrRet-isr), isrPagar:r2(Math.max(0,isr-isrRet)),
-      gastos:gastos, cuentan:cuentan, revisar:revisar, anual:r2(anual)
+      gastos:gastos, cuentan:cuentan, revisar:revisar, personales:personales, anual:r2(anual)
     };
   }
 
@@ -444,121 +580,161 @@
     });
   }
 
-  function renderIngreso(m){
-    var body=$("ing-body"); body.innerHTML="";
-    $("ing-src").textContent = m.real ? (m.ingresos.length + (m.ingresos.length===1?" factura tuya":" facturas tuyas")) : "estimado";
+  function renderBase(m){
+    $("base-amt").textContent = money(m.base);
+    var tag=$("base-tag");
+    tag.textContent = m.real ? (m.ingresos.length===1 ? "tu factura" : m.ingresos.length+" facturas") : "estimada";
+    tag.className = "tag " + (m.real ? "real" : "est");
 
+    var body=$("base-body"); body.innerHTML="";
     if(!m.real){
-      var w=document.createElement("div"); w.className="est";
-      w.textContent = "Todavía no subes tu factura de este mes. Estoy usando " + money(m.base) + " como base. Arrastra tu XML y los números se corrigen solos.";
-      body.appendChild(w);
+      var h=document.createElement("p"); h.className="hint";
+      h.textContent="Todavía no subes tu factura de este mes, así que estoy usando tu base estimada. Arrastra el XML y los números se corrigen solos.";
+      body.appendChild(h);
     } else {
       m.ingresos.forEach(function(f){
         var p=document.createElement("div"); p.className="who";
         var s=document.createElement("span"); s.textContent=(f.receptor||"Cliente")+" · "+f.fecha;
-        var x=document.createElement("button"); x.className="x"; x.type="button"; x.textContent="×";
-        x.setAttribute("aria-label","Quitar factura de ingresos");
+        var x=document.createElement("button"); x.className="btn ghost sm"; x.type="button"; x.textContent="Quitar";
         x.addEventListener("click", function(){
           state.ingresos = state.ingresos.filter(function(o){ return o.id !== f.id; });
-          save(); render();
+          save(); render(); status("factura de ingresos quitada");
         });
         p.appendChild(s); p.appendChild(x); body.appendChild(p);
       });
     }
     var kv=document.createElement("div"); kv.className="kv";
-    [["Base facturada",money(m.base)],["IVA que cobraste",money(m.trasladado)],["IVA que te retienen","−"+money(m.retenido)],["ISR que te retienen","−"+money(m.isrRet)]]
-      .forEach(function(pair){
-        var d=document.createElement("div");
-        var k=document.createElement("span"); k.className="k"; k.textContent=pair[0];
-        var v=document.createElement("span"); v.className="v"; v.textContent=pair[1];
-        d.appendChild(k); d.appendChild(v); kv.appendChild(d);
-      });
+    [["Base facturada",money(m.base)],
+     ["IVA que cobraste",money(m.trasladado)],
+     ["IVA retenido","−"+money(m.retenido)],
+     ["ISR retenido","−"+money(m.isrRet)]].forEach(function(pair){
+      var d=document.createElement("div");
+      var k=document.createElement("span"); k.className="k"; k.textContent=pair[0];
+      var v=document.createElement("span"); v.className="v"; v.textContent=pair[1];
+      d.appendChild(k); d.appendChild(v); kv.appendChild(d);
+    });
     body.appendChild(kv);
+  }
+
+  function renderLista(m){
+    var list=$("list");
+    list.innerHTML="";
+
+    if(!m.gastos.length){
+      var e=document.createElement("div"); e.className="empty";
+      e.textContent = "Ninguna factura de gastos este mes todavía.";
+      list.appendChild(e);
+      $("resumen").textContent="";
+      return;
+    }
+
+    var partes=[];
+    if(m.cuentan) partes.push(m.cuentan+" aplican");
+    if(m.revisar) partes.push(m.revisar+" por revisar");
+    if(m.personales) partes.push(m.personales+" personales");
+    $("resumen").textContent = partes.join(" · ");
+
+    m.gastos.slice().sort(function(a,b){ return a.fecha < b.fecha ? 1 : -1; }).forEach(function(g){
+      var c=tipoDe(g), tp=TIPOS[c.tipo]||TIPOS.revisar;
+      var acred=r2((Number(g.iva)||0)*tp.prop);
+
+      var item=document.createElement("div"); item.className="item";
+
+      var row1=document.createElement("div"); row1.className="row1";
+      var name=document.createElement("span"); name.className="name"; name.textContent=g.proveedor||"Sin nombre";
+      var mon=document.createElement("span"); mon.className="money"; mon.textContent=money((Number(g.subtotal)||0)+(Number(g.iva)||0));
+      var x=document.createElement("button"); x.className="x"; x.type="button"; x.textContent="✕";
+      x.setAttribute("aria-label","Quitar "+(g.proveedor||"factura"));
+      x.addEventListener("click", function(){
+        state.gastos=state.gastos.filter(function(o){ return o.id!==g.id; });
+        save(); render(); status("gasto quitado");
+      });
+      row1.appendChild(name); row1.appendChild(mon); row1.appendChild(x);
+
+      var row2=document.createElement("div"); row2.className="row2";
+      var badge=document.createElement("button");
+      badge.type="button"; badge.className="badge "+tp.badge; badge.textContent=tp.label;
+      badge.setAttribute("aria-expanded","false");
+      badge.title="Cambiar clasificación";
+      var meta=document.createElement("span"); meta.className="meta";
+      meta.textContent=g.fecha+" · IVA "+money(Number(g.iva)||0);
+      var credit=document.createElement("span");
+      credit.className="credit"+(acred>0?"":" zero");
+      credit.textContent = acred>0 ? "+"+money(acred) : "—";
+      row2.appendChild(badge); row2.appendChild(meta); row2.appendChild(credit);
+
+      var why=document.createElement("div"); why.className="why"; why.textContent=c.motivo;
+
+      var sel=document.createElement("select");
+      sel.setAttribute("aria-label","Clasificación de "+(g.proveedor||"la factura"));
+      sel.hidden = (c.tipo !== "revisar");
+      badge.setAttribute("aria-expanded", String(!sel.hidden));
+      Object.keys(TIPOS).forEach(function(key){
+        var o=document.createElement("option"); o.value=key; o.textContent=TIPOS[key].txt;
+        if(key===c.tipo) o.selected=true; sel.appendChild(o);
+      });
+      sel.addEventListener("change", function(){
+        g.tipoManual=sel.value;
+        g.motivoManual="Lo clasificaste tú"+(g.emisorRfc?" — lo recordaré para "+(g.proveedor||g.emisorRfc):"");
+        if(g.emisorRfc) state.reglas[g.emisorRfc.toUpperCase()]=sel.value;
+        save(); render();
+        status("listo, lo recordaré para "+(g.proveedor||"ese proveedor"));
+      });
+      badge.addEventListener("click", function(){
+        sel.hidden = !sel.hidden;
+        badge.setAttribute("aria-expanded", String(!sel.hidden));
+        if(!sel.hidden) sel.focus();
+      });
+
+      item.appendChild(row1); item.appendChild(row2); item.appendChild(why); item.appendChild(sel);
+      list.appendChild(item);
+    });
   }
 
   function render(){
     $("setup").hidden = !!state.rfc;
     var m = metrics();
-    renderIngreso(m);
+    renderBase(m);
 
+    var hero=$("hero");
     if(m.restante > 0){
-      $("lead-lbl").textContent = "Te falta facturar aproximadamente";
-      $("lead").innerHTML = money(m.faltaBase) + ' <span class="unit">de compras</span>';
+      hero.classList.remove("done");
+      $("lead-lbl").textContent = "Te falta facturar";
+      $("lead").innerHTML = money(m.faltaBase) + ' <span class="unit">en compras</span>';
     } else {
-      $("lead-lbl").textContent = "Ya llegaste a la meta";
-      $("lead").textContent = "Este mes no pagas IVA";
+      hero.classList.add("done");
+      $("lead-lbl").textContent = "Este mes";
+      $("lead").textContent = "Ya no pagas IVA";
     }
+
     $("bar").style.width = m.pct.toFixed(1) + "%";
-    $("bar-l").textContent = money(m.acred) + " acreditable";
-    $("bar-r").textContent = "meta " + money(m.aCargo);
+    var bw=$("barwrap");
+    bw.setAttribute("aria-valuenow", String(Math.round(m.pct)));
+    bw.setAttribute("aria-valuemin","0"); bw.setAttribute("aria-valuemax","100");
+    $("bar-l").textContent = money(m.acred);
+    $("bar-r").textContent = money(m.aCargo);
 
     $("c-num").textContent = String(m.gastos.length);
-    $("c-num-d").textContent = m.revisar ? (m.revisar + " por revisar") : (m.cuentan + " sí aplican");
     $("c-iva").textContent = money(m.acred);
     $("c-pay").textContent = money(m.restante);
-    $("cell-pay").className = m.restante > 0 ? "cell pay" : "cell done";
+    $("stat-pay").className = "stat pay" + (m.restante > 0 ? "" : " zero");
 
-    var t = "ISR del mes: <b>" + money(m.isr) + "</b>. Te retienen <b>" + money(m.isrRet) + "</b>, así que ";
+    var t = "ISR del mes: <b>" + money(m.isr) + "</b>, y te retienen <b>" + money(m.isrRet) + "</b>, ";
     t += m.isrPagar > 0
-      ? ("sales a pagar <b>" + money(m.isrPagar) + "</b>.")
-      : ("de ISR no pagas nada" + (m.favor>0 ? (" — incluso te retienen " + money(m.favor) + " de más.") : "."));
+      ? ("así que sales a pagar <b>" + money(m.isrPagar) + "</b> de ISR.")
+      : ("así que de ISR no pagas nada" + (m.favor>0 ? (" — de hecho te retienen <b>" + money(m.favor) + "</b> de más.") : "."));
+    if(m.sobrante > 0){
+      t += " Llevas <b>" + money(m.sobrante) + "</b> de IVA de más: se acredita en los meses que siguen.";
+    }
     $("isrline").innerHTML = t;
 
-    var list=$("list"); list.innerHTML="";
-    if(!m.gastos.length){
-      var e=document.createElement("div"); e.className="empty"; e.textContent="Todavía no agregas nada este mes."; list.appendChild(e);
-    } else {
-      m.gastos.slice().sort(function(a,b){ return a.fecha < b.fecha ? 1 : -1; }).forEach(function(g){
-        var c=tipoDe(g), tp=TIPOS[c.tipo]||TIPOS.revisar;
-        var acred=r2((Number(g.iva)||0)*tp.prop);
-
-        var row=document.createElement("div"); row.className="item";
-        var who=document.createElement("div"); who.className="who";
-        var head=document.createElement("div");
-        head.style.display="flex"; head.style.gap="8px"; head.style.alignItems="center"; head.style.flexWrap="wrap";
-        var n=document.createElement("span"); n.className="n"; n.textContent=g.proveedor||"Sin nombre";
-        var badge=document.createElement("span"); badge.className="badge "+tp.badge; badge.textContent=tp.label;
-        head.appendChild(n); head.appendChild(badge);
-        var line=document.createElement("span"); line.className="m";
-        line.textContent=g.fecha+" · "+money(Number(g.subtotal)||0)+" + "+money(Number(g.iva)||0)+" IVA";
-        var why=document.createElement("span"); why.className="why"; why.textContent=c.motivo;
-        who.appendChild(head); who.appendChild(line); who.appendChild(why);
-
-        var sel=document.createElement("select");
-        sel.setAttribute("aria-label","Clasificación de "+(g.proveedor||"la factura"));
-        Object.keys(TIPOS).forEach(function(key){
-          var o=document.createElement("option"); o.value=key; o.textContent=TIPOS[key].txt;
-          if(key===c.tipo) o.selected=true; sel.appendChild(o);
-        });
-        sel.addEventListener("change", function(){
-          g.tipoManual=sel.value;
-          g.motivoManual="Lo clasificaste tú"+(g.emisorRfc?" — lo recordaré para "+(g.proveedor||g.emisorRfc):"");
-          if(g.emisorRfc) state.reglas[g.emisorRfc.toUpperCase()]=sel.value;
-          save(); render();
-        });
-        who.appendChild(sel);
-
-        var amt=document.createElement("div"); amt.className="amt";
-        var a=document.createElement("div"); a.className="a"; a.textContent=money(Number(g.iva)||0)+" IVA";
-        var b=document.createElement("div"); b.className="b"+(acred>0?"":" zero"); b.textContent=acred>0?"+"+money(acred):"—";
-        amt.appendChild(a); amt.appendChild(b);
-
-        var x=document.createElement("button"); x.className="x"; x.type="button"; x.textContent="×";
-        x.setAttribute("aria-label","Quitar "+(g.proveedor||"factura"));
-        x.addEventListener("click", function(){
-          state.gastos=state.gastos.filter(function(o){ return o.id!==g.id; });
-          save(); render();
-        });
-
-        row.appendChild(who); row.appendChild(amt); row.appendChild(x);
-        list.appendChild(row);
-      });
-    }
+    renderLista(m);
+    $("drop").classList.toggle("slim", m.gastos.length > 0);
 
     var an=$("anual");
     if(m.anual > 0){
       an.hidden=false;
-      an.innerHTML="<strong>"+money(m.anual)+"</strong> de este mes no cuentan para tu IVA, pero son deducción personal: sirven en tu declaración anual contra tu sueldo, donde valen bastante más.";
+      an.innerHTML="<b>"+money(m.anual)+"</b> de este mes no cuentan para tu IVA, pero son deducción personal: valen en tu declaración anual, contra tu sueldo.";
     } else { an.hidden=true; }
 
     var count=Object.keys(state.reglas).length;
@@ -662,7 +838,7 @@
     var xmls=arr.filter(function(f){ return /\.xml$/i.test(f.name) || /xml/.test(f.type); });
     var otros=arr.length-xmls.length;
     if(!xmls.length){
-      status(otros ? "solo puedo leer archivos .xml — agrégala a mano" : " ");
+      status(otros ? "solo puedo leer archivos .xml — agrégala a mano" : "");
       if(otros) openForm();
       return;
     }
@@ -685,7 +861,7 @@
       if(dup) p.push(dup+" repetida"+(dup>1?"s":""));
       if(err) p.push(err+" ilegible"+(err>1?"s":""));
       if(otros) p.push("los PDF van a mano");
-      save(); render(); status(p.join(" · ") || " ");
+      save(); render(); status(p.join(" · "));
     }
   }
 
@@ -804,7 +980,6 @@
   $("cfg-rfc").value=state.rfc;
   $("cfg-ing").value=Number(state.ingresoDefault).toFixed(2);
   render();
-  status(" ");
 
   // Sin service worker: evita servir versiones viejas desde caché.
   if("serviceWorker" in navigator){
