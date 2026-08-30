@@ -14,6 +14,7 @@ Es una sola página HTML. Sin backend, sin cuentas, sin servidor. Todo se proces
   2. La **clave de producto/servicio del SAT** (`ClaveProdServ`) de los conceptos.
   3. El nombre del proveedor y la descripción.
 - Cuando corriges una clasificación, guarda la regla por RFC del proveedor y la aplica sola la próxima vez.
+- Lee del XML lo que cambia el resultado: **método de pago** (un PPD no acredita hasta que llega el complemento de pago), **tipo de comprobante** (una nota de crédito resta; un complemento de pago libera los PPD que referencia; nómina y traslado se ignoran), **moneda y tipo de cambio** (un CFDI en dólares se convierte a pesos) y el **UUID**, que es lo que identifica de verdad una factura y evita duplicados.
 - Calcula el ISR del mes con la tabla del art. 113-E y lo compara contra la retención del 1.25%.
 - Arrastra el IVA a favor de un mes al siguiente, como corresponde.
 - Acumula las **deducciones personales del año** (médicos, seguros, colegiaturas, retiro), aplica el tope y estima cuánto valen contra tu ISR de sueldos con la tarifa anual del art. 152.
@@ -78,16 +79,13 @@ Hoy arrastras los XML a mano. El SAT tiene un servicio oficial y gratuito de des
 
 No se puede llamar desde el navegador: necesita SOAP y tu e.firma, que no debe salir de tu equipo. Sería un script de Node que corres localmente y que deja los XML en una carpeta; la app los lee de ahí. Es la mejora que más trabajo manual elimina, y también la más grande.
 
-### 2. Aviso de cierre
-Un recordatorio el día 15 con las cifras listas para capturar en el portal del SAT: ISR a pagar, IVA trasladado cobrado, IVA retenido, IVA acreditable. Cierra el ciclo; hoy la app te informa pero no te acompaña hasta la declaración.
+### 2. Verificar el estatus contra el SAT
+Un proveedor puede cancelar una factura después de emitirla y hoy la seguirías acreditando. El SAT publica un servicio de consulta de estatus por UUID. No se puede llamar desde el navegador por CORS, así que encaja con el mismo script local del punto anterior.
 
-### 3. Respaldo menos frágil
-Todo vive en el `localStorage` de un navegador. Un recordatorio de respaldo cada mes, o guardar el JSON directamente en una carpeta con la File System Access API, quita el único riesgo real de pérdida de datos.
-
-### 4. Separar los topes propios de la deducción personal
+### 3. Separar los topes propios de la deducción personal
 Las colegiaturas y las aportaciones complementarias de retiro llevan límites propios que hoy no se distinguen del tope general. Con un subtipo por gasto el cálculo anual quedaría fino.
 
-### 5. Que el clasificador aprenda de la descripción
+### 4. Que el clasificador aprenda de la descripción
 Hoy aprende por RFC del emisor. Aprender también por palabras de la descripción cubriría a proveedores que facturan cosas distintas — un mismo RFC que a veces vende software y a veces comida.
 
 ### Lo que conviene NO hacer
