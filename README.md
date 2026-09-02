@@ -19,7 +19,17 @@ Es una sola página HTML. Sin backend, sin cuentas, sin servidor. Todo se proces
 - Arrastra el IVA a favor de un mes al siguiente, como corresponde.
 - Acumula las **deducciones personales del año** (médicos, seguros, colegiaturas, retiro), aplica el tope y estima cuánto valen contra tu ISR de sueldos con la tarifa anual del art. 152.
 - Muestra el **año mes por mes**: facturado, IVA a cargo, acreditado, pagado y saldo a favor.
+- Lleva el **libro de saldos a favor**: cuánto IVA tienes disponible para acreditar, cuánto ya aplicaste y cuánto ISR te han retenido de más.
 - Exporta CSV del mes y respaldo completo en JSON.
+
+## El cierre del mes
+
+El panel de cierre es un espejo del portal del SAT: lista los campos que te va a pedir, con el nombre que usa el SAT y en el orden en que aparecen, agrupados por obligación. Cada uno se copia con un toque.
+
+- **Calcula tu fecha límite real.** No todos declaramos el día 17: se le suman días hábiles según el sexto dígito numérico de tu RFC (Decreto del 26-dic-2013, art. 5.1, que la RMF recoge cada año). Descuenta fines de semana, los días festivos de ley y jueves y viernes santo. El SAT puede publicar días inhábiles extra que aquí no se conocen.
+- **Avisa de lo que falta resolver** antes de declarar, con el IVA que está en juego.
+- **Compara contra el portal.** Al cerrar puedes capturar lo que te mostró la pantalla del SAT. Si no cuadra con lo calculado, casi siempre es una factura que no tienes cargada; la diferencia queda anotada en el mes.
+- **Congela el mes.** Una vez cerrado, un CFDI que llegue después con fecha de ese mes se marca como **tardía** y no reescribe en silencio lo que ya enviaste. Puedes incluirla a la fuerza (implica complementaria) o reabrir el mes completo.
 
 ## Las reglas fiscales que implementa
 
@@ -87,6 +97,9 @@ Las colegiaturas y las aportaciones complementarias de retiro llevan límites pr
 
 ### 4. Que el clasificador aprenda de la descripción
 Hoy aprende por RFC del emisor. Aprender también por palabras de la descripción cubriría a proveedores que facturan cosas distintas — un mismo RFC que a veces vende software y a veces comida.
+
+### 5. Días inhábiles que publica el SAT
+La fecha límite ya descuenta fines de semana, festivos de ley y semana santa, pero el SAT publica periodos de vacaciones generales y días inhábiles adicionales en su portal. Hoy no se conocen; sería una lista corta y editable a mano.
 
 ### Lo que conviene NO hacer
 

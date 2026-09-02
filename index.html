@@ -279,6 +279,7 @@
   .t-rev{background:var(--alert-bg);color:var(--alert)}
   .t-anual{background:var(--azure-bg);color:var(--azure)}
   .t-wait{background:var(--amber-bg);color:var(--amber)}
+  .t-late{background:var(--alert-bg);color:var(--alert)}
 
   .vacio{padding:var(--s5) var(--s4);text-align:center;color:var(--ink-3);font-size:13.5px}
   .mas{
@@ -298,6 +299,36 @@
   .cop .ic{font-family:var(--f-mono);font-size:10px;color:var(--ink-3);letter-spacing:.06em}
   .cop:hover{border-color:var(--signal)}
   .cop:hover .ic{color:var(--signal)}
+
+  .grupo + .grupo{margin-top:var(--s4)}
+  .grupo > .gt{
+    display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap;
+    font-family:var(--f-mono);font-size:10px;font-weight:600;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-2);
+    padding-bottom:7px;margin-bottom:var(--s2);border-bottom:1px solid var(--line-2);
+  }
+  .grupo > .gt .auto{margin-left:auto;letter-spacing:.06em;text-transform:none;font-weight:400;color:var(--ink-3)}
+  .plazo{font-family:var(--f-mono);font-size:11.5px;font-weight:500;letter-spacing:.04em;color:var(--ink-3)}
+  .plazo.urge{color:var(--amber)}
+  .plazo.vencido{color:var(--alert)}
+
+  .bloqueo,.sello{
+    display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
+    border-radius:var(--r);padding:11px 13px;font-size:12.5px;color:var(--ink-2);line-height:1.5;
+  }
+  .bloqueo{background:var(--amber-bg)}
+  .sello{background:var(--signal-bg)}
+  .bloqueo .btn,.sello .btn{margin-left:auto;flex-shrink:0}
+  .bloqueo b,.sello b{color:var(--ink)}
+
+  .recon{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:var(--s3)}
+  .recon label{display:flex;flex-direction:column;gap:5px}
+  .dif{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.03em;min-height:14px}
+  .dif.mal{color:var(--alert)}
+  .dif.bien{color:var(--signal)}
+  .rowbtns2{display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center}
+  .cerrar-caja{display:flex;flex-direction:column;gap:var(--s3);
+    background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:var(--s3)}
 
   /* anual */
   .cifra{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:27px;font-weight:600;letter-spacing:-.04em;color:var(--signal)}
@@ -340,6 +371,7 @@
     background:var(--amber-bg);font-size:12.5px;color:var(--ink-2);
   }
   .aviso .btn{margin-left:auto}
+  .aviso.grave{background:var(--alert-bg)}
 
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -454,11 +486,7 @@
       <span class="sum-amt" id="cierre-sum"></span>
       <span class="chev"></span>
     </summary>
-    <div class="body" style="display:flex;flex-direction:column;gap:var(--s3)">
-      <p class="hint">Las cifras que capturas en el portal del SAT. Toca cualquiera para copiarla.</p>
-      <div class="copiables" id="copiables"></div>
-      <p class="fine">Se declara a más tardar el día 17 del mes siguiente. Revisa que no queden facturas pendientes antes de cerrar.</p>
-    </div>
+    <div class="body" id="cierre-body" style="display:flex;flex-direction:column;gap:var(--s3)"></div>
   </details>
 
   <details class="panel" id="anio">
@@ -500,7 +528,7 @@
 
   var KEY = "mis-facturas-v1";
   var DEF_ING = 21352.34;
-  var DIAS_RESPALDO = 30;
+  var DIAS_RESPALDO = 14;
 
   // UMA 2026 (INEGI, vigente desde el 1 de febrero de 2026): $117.31 diarios.
   var UMA_ANUAL = 42794.64;
@@ -535,7 +563,8 @@
     personal:   { prop:0,     label:"No cuenta",        tag:"t-no",    txt:"Personal — no cuenta para IVA" },
     anual:      { prop:0,     label:"Para tu anual",    tag:"t-anual", txt:"Médico, seguro, colegiatura — deducción anual" },
     revisar:    { prop:0,     label:"Revisar",          tag:"t-rev",   txt:"No estoy segura — decide tú" },
-    pendiente:  { prop:0,     label:"Sin pagar",        tag:"t-wait",  txt:"Pendiente de pago" }
+    pendiente:  { prop:0,     label:"Sin pagar",        tag:"t-wait",  txt:"Pendiente de pago" },
+    tardia:     { prop:0,     label:"Tardía",           tag:"t-late",  txt:"Llegó después del cierre" }
   };
   var MANUALES = ["actividad","mixto","restaurante","personal","anual"];
 
@@ -574,7 +603,80 @@
   var MESES_CORTOS = ["E","F","M","A","M","J","J","A","S","O","N","D"];
   var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
-  var state = { rfc:"", ingresoDefault:DEF_ING, sueldoAnual:0, ultimoRespaldo:0, ingresos:[], gastos:[], reglas:{} };
+  /* ---------- fecha límite ----------
+     No todos declaramos el 17. Al día 17 se le suman días hábiles según el sexto
+     dígito numérico del RFC (Decreto del 26-dic-2013, art. 5.1, que la RMF recoge
+     cada año). Con RFC terminado en dígito 5 o 6 son tres días hábiles más. */
+  var DIAS_EXTRA = { "1":1,"2":1,"3":2,"4":2,"5":3,"6":3,"7":4,"8":4,"9":5,"0":5 };
+
+  var iso = function(d){ return d.toISOString().slice(0,10); };
+  var hoyISO = function(){
+    var d=new Date();
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  };
+  var diasEntre = function(a,b){
+    var pa=a.split("-"), pb=b.split("-");
+    return Math.round((Date.UTC(+pb[0],+pb[1]-1,+pb[2]) - Date.UTC(+pa[0],+pa[1]-1,+pa[2])) / 86400000);
+  };
+
+  function sextoDigito(rfc){
+    var d = String(rfc||"").replace(/\D/g,"");
+    return d.length >= 6 ? d.charAt(5) : null;
+  }
+  function nthDow(y, mes, dow, n){
+    var d = new Date(Date.UTC(y, mes, 1));
+    while(d.getUTCDay() !== dow) d.setUTCDate(d.getUTCDate()+1);
+    d.setUTCDate(d.getUTCDate() + (n-1)*7);
+    return d;
+  }
+  function pascua(y){
+    var a=y%19, b=Math.floor(y/100), c=y%100;
+    var d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3);
+    var h=(19*a+b-d-g+15)%30, i=Math.floor(c/4), k=c%4;
+    var l=(32+2*e+2*i-h-k)%7, mm=Math.floor((a+11*h+22*l)/451);
+    var mes=Math.floor((h+l-7*mm+114)/31), dia=((h+l-7*mm+114)%31)+1;
+    return new Date(Date.UTC(y, mes-1, dia));
+  }
+  var FERIADOS = {};
+  function feriados(y){
+    if(FERIADOS[y]) return FERIADOS[y];
+    var s={};
+    [new Date(Date.UTC(y,0,1)), nthDow(y,1,1,1), nthDow(y,2,1,3),
+     new Date(Date.UTC(y,4,1)), new Date(Date.UTC(y,8,16)), nthDow(y,10,1,3),
+     new Date(Date.UTC(y,11,25))].forEach(function(d){ s[iso(d)]=true; });
+    var p = pascua(y);
+    s[iso(new Date(p.getTime()-3*86400000))] = true;  // jueves santo
+    s[iso(new Date(p.getTime()-2*86400000))] = true;  // viernes santo
+    FERIADOS[y]=s;
+    return s;
+  }
+  function habil(d, fer){
+    var w=d.getUTCDay();
+    return w!==0 && w!==6 && !fer[iso(d)];
+  }
+  function fechaLimite(mes){
+    var y=+mes.slice(0,4), mm=+mes.slice(5,7);
+    var vy = mm===12 ? y+1 : y, vm = mm===12 ? 1 : mm+1;
+    var d = new Date(Date.UTC(vy, vm-1, 17));
+    var fer = feriados(vy);
+    var extra = DIAS_EXTRA[sextoDigito(state.rfc)];
+    if(extra == null){
+      while(!habil(d,fer)) d.setUTCDate(d.getUTCDate()+1);
+      return { iso:iso(d), generico:true, extra:0 };
+    }
+    for(var n=0; n<extra; ){
+      d.setUTCDate(d.getUTCDate()+1);
+      if(habil(d,fer)) n++;
+    }
+    return { iso:iso(d), generico:false, extra:extra };
+  }
+  var fechaLarga = function(s){
+    var p=s.split("-");
+    return parseInt(p[2],10) + " de " + MESES[parseInt(p[1],10)-1];
+  };
+
+  var state = { rfc:"", ingresoDefault:DEF_ING, sueldoAnual:0, ultimoRespaldo:0,
+                ingresos:[], gastos:[], reglas:{}, declaraciones:{} };
   var mesActual = null, filtro = "todos", verTodos = false, busqueda = "", LIMITE = 15;
 
   var $ = function(id){ return document.getElementById(id); };
@@ -615,7 +717,8 @@
   }
   function snapshot(){
     return { rfc:state.rfc, ingresoDefault:state.ingresoDefault, sueldoAnual:state.sueldoAnual,
-             ultimoRespaldo:state.ultimoRespaldo, ingresos:state.ingresos, gastos:limpio(), reglas:state.reglas };
+             ultimoRespaldo:state.ultimoRespaldo, ingresos:state.ingresos, gastos:limpio(),
+             reglas:state.reglas, declaraciones:state.declaraciones };
   }
   function save(){
     try{ localStorage.setItem(KEY, JSON.stringify(snapshot())); }
@@ -635,6 +738,7 @@
       state.gastos = Array.isArray(s.gastos) ? s.gastos : [];
       state.gastos.forEach(function(g){ delete g._c; });
       state.reglas = (s.reglas && typeof s.reglas === "object") ? s.reglas : {};
+      state.declaraciones = (s.declaraciones && typeof s.declaraciones === "object") ? s.declaraciones : {};
     }catch(e){}
   }
 
@@ -688,6 +792,12 @@
   }
 
   function tipoDe(g){
+    // Llegó después de que el mes ya se declaró: no puede cambiar lo que ya enviaste
+    // al SAT, así que no acredita hasta que tú decidas incluirla.
+    if(g.tardia){
+      return { tipo:"tardia", tardia:true,
+               motivo:"Llegó después de que declaraste el mes — no entró en la declaración" };
+    }
     // Un CFDI con método PPD no acredita IVA hasta que exista el complemento de pago.
     if(g.metodoPago === "PPD" && !g.pagado){
       return { tipo:"pendiente", motivo:"Pago diferido o en parcialidades — acredita cuando llegue el complemento de pago", ppd:true };
@@ -707,7 +817,7 @@
   }
 
   function brutoMes(mes){
-    var ing = state.ingresos.filter(function(f){ return monthKey(f.fecha) === mes; });
+    var ing = state.ingresos.filter(function(f){ return monthKey(f.fecha) === mes && !f.tardia; });
     var base=0, trasladado=0, retenido=0, isrRet=0, real = ing.length > 0;
     if(real){
       ing.forEach(function(f){
@@ -792,12 +902,13 @@
   function metrics(){
     var b = brutoMes(mesActual);
     var gastos = state.gastos.filter(function(g){ return monthKey(g.fecha) === mesActual; });
-    var cuentan=0, revisar=0, personales=0, pendientes=0, anual=0;
+    var cuentan=0, revisar=0, personales=0, pendientes=0, anual=0, tardias=0, ivaEnJuego=0;
     gastos.forEach(function(g){
       var c = tipoDe(g), t = TIPOS[c.tipo] || TIPOS.revisar;
       if(t.prop > 0) cuentan++;
-      if(c.tipo === "revisar") revisar++;
-      if(c.tipo === "pendiente") pendientes++;
+      if(c.tipo === "revisar"){ revisar++; ivaEnJuego += Number(g.iva)||0; }
+      if(c.tipo === "pendiente"){ pendientes++; ivaEnJuego += Number(g.iva)||0; }
+      if(c.tipo === "tardia") tardias++;
       if(c.tipo === "personal") personales++;
       if(c.tipo === "anual") anual += Number(g.total) || ((Number(g.subtotal)||0)+(Number(g.iva)||0));
     });
@@ -813,7 +924,24 @@
       pct: b.aCargo>0 ? Math.min(100, ((b.acred+arrastre)/b.aCargo)*100) : 100,
       isr:isr, favor:r2(b.isrRet-isr), isrPagar:r2(Math.max(0, isr-b.isrRet)),
       gastos:gastos, cuentan:cuentan, revisar:revisar, pendientes:pendientes,
-      personales:personales, anual:r2(anual)
+      personales:personales, anual:r2(anual), tardias:tardias, ivaEnJuego:r2(ivaEnJuego),
+      declarado: !!state.declaraciones[mesActual]
+    };
+  }
+
+  // Cuánto IVA a favor traído de meses anteriores se alcanzó a usar, y cuánto ISR
+  // te retuvieron de más. Son los dos saldos que el portal no te presume.
+  function saldos(anio){
+    var serie = serieAnual(anio), aplicado = 0, isrFavor = 0;
+    serie.forEach(function(f){
+      aplicado += Math.min(f.saldoPrevio, Math.max(0, f.aCargo - f.acred));
+      isrFavor += Math.max(0, f.isrRet - f.isr);
+    });
+    return {
+      aplicado: r2(aplicado),
+      disponible: serie.length ? serie[serie.length-1].saldo : 0,
+      isrFavor: r2(isrFavor),
+      meses: serie.length
     };
   }
 
@@ -827,22 +955,26 @@
       s.appendChild(document.createTextNode(txt));
       leds.appendChild(s);
     }
+    if(m.declarado) led("ok", "declarado");
     led(m.real ? "ok" : "warn", m.real ? "base real" : "base estimada");
     if(m.revisar) led("warn", m.revisar + " por revisar");
     if(m.pendientes) led("warn", m.pendientes + " sin pagar");
-    if(!m.revisar && !m.pendientes && m.gastos.length) led("ok", "sin pendientes");
-    led(m.restante > 0 ? "warn" : "ok", m.restante > 0 ? "iva por cubrir" : "iva cubierto");
+    if(m.tardias) led("warn", m.tardias + " tardía" + (m.tardias===1?"":"s"));
+    if(!m.revisar && !m.pendientes && !m.tardias && m.gastos.length) led("ok", "sin pendientes");
+    if(!m.declarado) led(m.restante > 0 ? "warn" : "ok", m.restante > 0 ? "iva por cubrir" : "iva cubierto");
   }
 
   function renderRespaldo(){
-    var el = $("aviso-respaldo");
-    if(!state.gastos.length){ el.hidden = true; return; }
+    var caja = $("aviso-respaldo");
+    var n = state.gastos.length + state.ingresos.length;
+    if(!n){ caja.hidden = true; return; }
     var dias = state.ultimoRespaldo ? Math.floor((Date.now() - state.ultimoRespaldo) / 86400000) : null;
-    if(dias !== null && dias < DIAS_RESPALDO){ el.hidden = true; return; }
-    el.hidden = false;
+    if(dias !== null && dias < DIAS_RESPALDO){ caja.hidden = true; return; }
+    caja.hidden = false;
+    caja.className = dias === null ? "aviso grave" : "aviso";
     $("aviso-texto").textContent = dias === null
-      ? "Todo esto vive solo en este navegador y aún no bajas un respaldo."
-      : "Tu último respaldo fue hace " + dias + " días.";
+      ? n + " facturas viven solo en este navegador. Si lo limpias o cambias de equipo, se pierden todas."
+      : "Tu último respaldo fue hace " + dias + " días; desde entonces cargaste facturas nuevas.";
   }
 
   function renderCanales(){
@@ -933,6 +1065,7 @@
     todos:      { label:"Todos",      test:function(){ return true; } },
     revisar:    { label:"Por revisar",test:function(t){ return t === "revisar"; } },
     pendiente:  { label:"Sin pagar",  test:function(t){ return t === "pendiente"; } },
+    tardia:     { label:"Tardías",    test:function(t){ return t === "tardia"; } },
     aplican:    { label:"Aplican",    test:function(t){ return (TIPOS[t]||TIPOS.revisar).prop > 0; } },
     fuera:      { label:"No cuentan", test:function(t){ return t === "personal" || t === "anual"; } }
   };
@@ -967,6 +1100,7 @@
     if(m.cuentan) partes.push(m.cuentan+" aplican");
     if(m.revisar) partes.push(m.revisar+" por revisar");
     if(m.pendientes) partes.push(m.pendientes+" sin pagar");
+    if(m.tardias) partes.push(m.tardias+" tardías");
     $("resumen").textContent = partes.join(" · ");
     renderChips(m);
 
@@ -978,8 +1112,8 @@
         return (norm(g.proveedor)+" "+norm(g.emisorRfc)+" "+norm(g.descripcion)).indexOf(q) !== -1;
       })
       .sort(function(a,b){
-        var pa = ["revisar","pendiente"].indexOf(tipoDe(a).tipo) >= 0 ? 0 : 1;
-        var pb = ["revisar","pendiente"].indexOf(tipoDe(b).tipo) >= 0 ? 0 : 1;
+        var pa = ["revisar","pendiente","tardia"].indexOf(tipoDe(a).tipo) >= 0 ? 0 : 1;
+        var pb = ["revisar","pendiente","tardia"].indexOf(tipoDe(b).tipo) >= 0 ? 0 : 1;
         if(pa !== pb) return pa - pb;
         return a.fecha < b.fecha ? 1 : -1;
       });
@@ -1031,9 +1165,18 @@
       cont.appendChild(row);
 
       var extra=document.createElement("div"); extra.className="extra";
-      extra.hidden = !(c.tipo === "revisar" || c.tipo === "pendiente");
+      extra.hidden = !(c.tipo === "revisar" || c.tipo === "pendiente" || c.tipo === "tardia");
 
-      if(c.ppd){
+      if(c.tardia){
+        var bt=document.createElement("button"); bt.className="btn xs"; bt.type="button";
+        bt.textContent="Incluirla de todos modos";
+        bt.title="Cambia un mes que ya declaraste — solo tiene sentido si vas a presentar complementaria";
+        bt.addEventListener("click", function(){
+          delete g.tardia; delete g._c; save(); render();
+          estado("incluida — el mes ya no coincide con lo que declaraste");
+        });
+        extra.appendChild(bt);
+      } else if(c.ppd){
         var b=document.createElement("button"); b.className="btn xs"; b.type="button";
         b.textContent="Ya la pagué — acreditar";
         b.addEventListener("click", function(){
@@ -1073,29 +1216,222 @@
     }
   }
 
-  function renderCierre(m){
-    $("cierre-sum").textContent = (m.restante > 0 || m.isrPagar > 0)
-      ? money(m.restante + m.isrPagar) + " a pagar" : "nada que pagar";
-    var cont=$("copiables"); cont.innerHTML="";
-    [["ISR a pagar", m.isrPagar],
-     ["IVA trasladado cobrado", m.trasladado],
-     ["IVA retenido", m.retenido],
-     ["IVA acreditable", m.acred]].forEach(function(par){
-      var b=document.createElement("button"); b.type="button"; b.className="cop";
-      var izq=document.createElement("span");
-      var k=document.createElement("span"); k.className="lbl"; k.textContent=par[0];
-      var v=document.createElement("span"); v.className="v"; v.textContent=money(par[1]);
-      izq.appendChild(k); izq.appendChild(v);
-      var ic=document.createElement("span"); ic.className="ic"; ic.textContent="copiar";
-      b.appendChild(izq); b.appendChild(ic);
-      b.addEventListener("click", function(){
-        copiar(r2(par[1]).toFixed(2)).then(function(ok){
-          ic.textContent = ok ? "copiado" : "no se pudo";
-          setTimeout(function(){ ic.textContent="copiar"; }, 1800);
-        });
+  function el(tag, clase, txt){
+    var n=document.createElement(tag);
+    if(clase) n.className=clase;
+    if(txt != null) n.textContent=txt;
+    return n;
+  }
+
+  // Un campo del portal: etiqueta con el nombre que usa el SAT y el número listo
+  // para pegar. Sin formato de moneda al copiar — el portal no lo acepta.
+  function copiable(cont, etiqueta, valor){
+    var b=el("button","cop"); b.type="button";
+    var izq=el("span");
+    izq.appendChild(el("span","lbl",etiqueta));
+    izq.appendChild(el("span","v",money(valor)));
+    var ic=el("span","ic","copiar");
+    b.appendChild(izq); b.appendChild(ic);
+    b.addEventListener("click", function(){
+      copiar(r2(valor).toFixed(2)).then(function(ok){
+        ic.textContent = ok ? "copiado" : "no se pudo";
+        setTimeout(function(){ ic.textContent="copiar"; }, 1800);
       });
-      cont.appendChild(b);
     });
+    cont.appendChild(b);
+    return b;
+  }
+
+  function grupo(body, titulo, auto){
+    var g=el("div","grupo");
+    var t=el("div","gt"); t.appendChild(el("span",null,titulo));
+    if(auto) t.appendChild(el("span","auto",auto));
+    g.appendChild(t);
+    var cop=el("div","copiables"); g.appendChild(cop);
+    body.appendChild(g);
+    return cop;
+  }
+
+  function renderCierre(m){
+    var body=$("cierre-body"); body.innerHTML="";
+    var dec = state.declaraciones[mesActual];
+    var lim = fechaLimite(mesActual);
+    var faltan = diasEntre(hoyISO(), lim.iso);
+
+    $("cierre-sum").textContent = dec ? "declarado"
+      : ((m.restante > 0 || m.isrPagar > 0) ? money(m.restante + m.isrPagar) + " a pagar" : "nada que pagar");
+
+    /* --- ya declarado: se congela --- */
+    if(dec){
+      var sello=el("div","sello");
+      var txt=el("span");
+      txt.innerHTML = "Declaraste " + monthName(mesActual).toLowerCase() + " el <b>" +
+        fechaLarga(String(dec.cerrado).slice(0,10)) + "</b>. Las cifras de abajo son las que enviaste.";
+      sello.appendChild(txt);
+      var reab=el("button","btn xs","Reabrir el mes"); reab.type="button";
+      reab.addEventListener("click", function(){
+        delete state.declaraciones[mesActual];
+        state.gastos.concat(state.ingresos).forEach(function(g){
+          if(monthKey(g.fecha)===mesActual && g.tardia){ delete g.tardia; delete g._c; }
+        });
+        save(); render(); estado("mes reabierto — las facturas tardías vuelven a contar");
+      });
+      sello.appendChild(reab);
+      body.appendChild(sello);
+
+      var kv=el("div","kv");
+      [["Ingresos",money(dec.base)],["ISR pagado",money(dec.isrPagar)],
+       ["IVA pagado",money(dec.restante)],["Quedó a favor",money(dec.sobrante)]].forEach(function(par){
+        var d=el("div");
+        d.appendChild(el("span","lbl",par[0]));
+        d.appendChild(el("span","v",par[1]));
+        kv.appendChild(d);
+      });
+      body.appendChild(kv);
+
+      if(dec.difs && dec.difs.length){
+        var ad=el("div","bloqueo");
+        ad.appendChild(el("span",null,"Al cerrar no cuadraba con el portal: " + dec.difs.join(" · ")));
+        body.appendChild(ad);
+      }
+      if(m.tardias){
+        var at=el("div","bloqueo");
+        at.appendChild(el("span",null, m.tardias + (m.tardias===1?" factura llegó":" facturas llegaron") +
+          " después de que declaraste. No cuentan aquí. Si quieres aprovecharlas tendrías que presentar una complementaria; lo más simple suele ser dejarlas fuera."));
+        body.appendChild(at);
+      }
+      return;
+    }
+
+    /* --- plazo --- */
+    var plazo=el("p","plazo");
+    plazo.textContent = "Vence el " + fechaLarga(lim.iso) +
+      (faltan > 1 ? " · faltan " + faltan + " días"
+                  : faltan === 1 ? " · es mañana"
+                  : faltan === 0 ? " · es hoy"
+                  : " · venció hace " + Math.abs(faltan) + " días");
+    if(faltan < 0) plazo.className="plazo vencido";
+    else if(faltan <= 3) plazo.className="plazo urge";
+    body.appendChild(plazo);
+
+    /* --- lo que hay que resolver antes --- */
+    if(m.revisar || m.pendientes){
+      var bl=el("div","bloqueo");
+      var qb=el("span");
+      var partes=[];
+      if(m.revisar) partes.push(m.revisar + (m.revisar===1?" factura sin clasificar":" facturas sin clasificar"));
+      if(m.pendientes) partes.push(m.pendientes + (m.pendientes===1?" sin complemento de pago":" sin complemento de pago"));
+      qb.innerHTML = "Tienes " + partes.join(" y ") + ". Suman <b>" + money(m.ivaEnJuego) +
+        "</b> de IVA que hoy no estás acreditando.";
+      bl.appendChild(qb);
+      var ver=el("button","btn xs","Ver cuáles"); ver.type="button";
+      ver.addEventListener("click", function(){
+        filtro = m.revisar ? "revisar" : "pendiente"; verTodos=false; render();
+        var lista=$("lista"); if(lista) lista.scrollIntoView({behavior:"smooth", block:"center"});
+      });
+      bl.appendChild(ver);
+      body.appendChild(bl);
+    }
+
+    body.appendChild(el("p","hint","Los campos del portal, en el orden en que te los pide. Toca cualquiera para copiar el número."));
+
+    /* --- ISR --- */
+    var gi = grupo(body, "ISR simplificado de confianza");
+    copiable(gi, "Total de ingresos", m.base);
+    copiable(gi, "ISR retenido", m.isrRet);
+    var nota=el("p","fine");
+    nota.textContent = "La tasa (" + (tasaISR(m.base)*100).toFixed(2) + "%) y el impuesto (" + money(m.isr) +
+      ") los calcula el portal solo. Con " + money(m.isrRet) + " retenidos" +
+      (m.isrPagar > 0 ? " sales a pagar " + money(m.isrPagar) + "." : ", no pagas nada" +
+       (m.favor > 0 ? " y quedan " + money(m.favor) + " a tu favor." : "."));
+    gi.parentNode.appendChild(nota);
+
+    /* --- IVA --- */
+    var gv = grupo(body, "IVA simplificado de confianza");
+    copiable(gv, "Valor de actos al 16%", m.base);
+    copiable(gv, "IVA cobrado", m.trasladado);
+    copiable(gv, "IVA acreditable", m.acred);
+    copiable(gv, "IVA retenido", m.retenido);
+    copiable(gv, "Saldo a favor de periodos anteriores", m.arrastre);
+    if(m.arrastre <= 0){
+      var na=el("p","fine","No traes saldo a favor de meses anteriores, así que ese campo va en cero.");
+      gv.parentNode.appendChild(na);
+    }
+
+    /* --- cerrar --- */
+    var abrir=el("button","btn primary","Ya la declaré — cerrar " + monthName(mesActual).split(" ")[0].toLowerCase());
+    abrir.type="button";
+    var caja=el("div","cerrar-caja"); caja.hidden=true;
+    abrir.addEventListener("click", function(){
+      abrir.hidden=true; caja.hidden=false;
+      var f=caja.querySelector("input"); if(f) f.focus();
+    });
+    body.appendChild(abrir);
+    body.appendChild(caja);
+    montarCierre(caja, m, abrir);
+  }
+
+  // Antes de congelar el mes, comparamos contra lo que mostró el portal. Una
+  // diferencia casi siempre significa una factura que no tienes cargada.
+  function montarCierre(caja, m, abrir){
+    caja.appendChild(el("p","hint","Opcional pero vale la pena: escribe lo que te mostró el portal. Si algo no cuadra es que te falta una factura."));
+
+    var campos=[
+      { k:"base",     et:"Ingresos según el portal", app:m.base },
+      { k:"isrPagar", et:"ISR a pagar",              app:m.isrPagar },
+      { k:"ivaPagar", et:"IVA a pagar",              app:m.restante },
+      { k:"ivaFavor", et:"IVA a favor que quedó",    app:m.sobrante }
+    ];
+    var form=el("div","recon"); var difs={};
+    campos.forEach(function(c){
+      var lab=el("label");
+      lab.appendChild(el("span","lbl",c.et));
+      var inp=el("input"); inp.type="number"; inp.step="0.01"; inp.placeholder="0.00";
+      var base="yo calculé " + money(c.app);
+      var d=el("span","dif",base);
+      inp.addEventListener("input", function(){
+        var v=parseFloat(inp.value);
+        if(isNaN(inp.value === "" ? NaN : v)){ d.textContent=base; d.className="dif"; difs[c.k]=null; return; }
+        var delta=r2(v - c.app);
+        if(Math.abs(delta) < 1){ d.textContent="cuadra"; d.className="dif bien"; difs[c.k]=null; }
+        else {
+          d.textContent = (delta > 0 ? "+" : "−") + money(Math.abs(delta)) + " vs. la app";
+          d.className="dif mal";
+          difs[c.k] = c.et + ": el portal dice " + money(v) + " y yo " + money(c.app);
+        }
+      });
+      lab.appendChild(inp); lab.appendChild(d);
+      form.appendChild(lab);
+    });
+    caja.appendChild(form);
+
+    function cerrar(conRespaldo){
+      var lista=[];
+      Object.keys(difs).forEach(function(k){ if(difs[k]) lista.push(difs[k]); });
+      state.declaraciones[mesActual] = {
+        cerrado: new Date().toISOString(),
+        base:m.base, isrRet:m.isrRet, isr:m.isr, isrPagar:m.isrPagar, isrFavor:m.favor,
+        trasladado:m.trasladado, retenido:m.retenido, acred:m.acred,
+        arrastre:m.arrastre, restante:m.restante, sobrante:m.sobrante,
+        difs: lista
+      };
+      save();
+      if(conRespaldo) hacerRespaldo();
+      render();
+      estado(lista.length ? "mes cerrado — quedó anotada la diferencia con el portal"
+                          : "mes cerrado, las cifras quedan congeladas");
+    }
+
+    var btns=el("div","rowbtns2");
+    var b1=el("button","btn primary","Cerrar y bajar respaldo"); b1.type="button";
+    b1.addEventListener("click", function(){ cerrar(true); });
+    var b2=el("button","btn","Solo cerrar"); b2.type="button";
+    b2.addEventListener("click", function(){ cerrar(false); });
+    var b3=el("button","btn","Cancelar"); b3.type="button";
+    b3.addEventListener("click", function(){ caja.hidden=true; abrir.hidden=false; });
+    btns.appendChild(b1); btns.appendChild(b2); btns.appendChild(b3);
+    caja.appendChild(btns);
+    caja.appendChild(el("p","fine","Al cerrar, una factura de este mes que llegue después ya no cambia estas cifras: la marco como tardía y te aviso."));
   }
 
   function renderAnio(){
@@ -1156,6 +1492,32 @@
     body.appendChild(b1);
 
     if(a.serie.length){
+      var s = saldos(anio);
+      var b3=document.createElement("div"); b3.className="bloque";
+      var h3=document.createElement("h3"); h3.textContent="Saldos a favor"; b3.appendChild(h3);
+      var p3=document.createElement("p"); p3.className="hint";
+      p3.textContent = "Un saldo a favor no te lo devuelven solo: queda registrado y tú decides qué hacer con él.";
+      b3.appendChild(p3);
+
+      var kv3=document.createElement("div"); kv3.className="kv";
+      [["IVA disponible", money(s.disponible)],
+       ["IVA ya aplicado", money(s.aplicado)],
+       ["ISR retenido de más", money(s.isrFavor)]].forEach(function(par){
+        var d=document.createElement("div");
+        var k=document.createElement("span"); k.className="lbl"; k.textContent=par[0];
+        var v=document.createElement("span"); v.className="v"; v.textContent=par[1];
+        d.appendChild(k); d.appendChild(v); kv3.appendChild(d);
+      });
+      b3.appendChild(kv3);
+
+      var n3=document.createElement("p"); n3.className="fine";
+      n3.textContent = "El IVA disponible es el que capturas el mes que entra en «Acreditamiento del saldo a favor de periodos anteriores»; " +
+        "también se puede pedir en devolución, pero es un trámite aparte y por el monto completo. " +
+        "El ISR retenido de más sale de que te retienen 1.25% y tu tasa real es menor. " +
+        "Antes se recuperaba en la anual; con los pagos mensuales definitivos desde 2026 conviene preguntarle a tu contador si sigue habiendo dónde aplicarlo.";
+      b3.appendChild(n3);
+      body.appendChild(b3);
+
       var b2=document.createElement("div"); b2.className="bloque";
       var h2=document.createElement("h3"); h2.textContent="Mes por mes"; b2.appendChild(h2);
       var wrap=document.createElement("div"); wrap.className="tabla-wrap";
@@ -1169,7 +1531,8 @@
       var tot={base:0,aCargo:0,acred:0,aPagar:0};
       a.serie.forEach(function(f){
         var tr=document.createElement("tr");
-        [monthName(f.mes).replace(" "+anio,""), money(f.base), money(f.aCargo), money(f.acred),
+        [monthName(f.mes).replace(" "+anio,"") + (state.declaraciones[f.mes] ? " ✓" : ""),
+         money(f.base), money(f.aCargo), money(f.acred),
          f.aPagar>0?money(f.aPagar):"—", f.saldo>0?money(f.saldo):"—"].forEach(function(txt,i){
           var td=document.createElement("td"); td.textContent=txt;
           if(i===4 && f.aPagar>0) td.className="neg";
@@ -1207,7 +1570,12 @@
     renderRespaldo();
 
     var ro=$("readout");
-    if(m.restante > 0){
+    if(m.declarado){
+      var dc = state.declaraciones[mesActual], pag = r2(dc.restante + dc.isrPagar);
+      ro.classList.add("done");
+      $("lead-lbl").textContent = "Mes declarado";
+      $("lead").textContent = pag > 0 ? money(pag) + " pagado" : "Declarado en ceros";
+    } else if(m.restante > 0){
       ro.classList.remove("done");
       $("lead-lbl").textContent = "Te falta facturar";
       $("lead").innerHTML = '<span class="cur">$</span>' +
@@ -1239,6 +1607,7 @@
     if(m.arrastre > 0) t += " Traías <b>"+money(m.arrastre)+"</b> de IVA a favor, ya está aplicado.";
     if(m.sobrante > 0) t += " Te quedan <b>"+money(m.sobrante)+"</b> de IVA a favor para el mes que entra.";
     if(m.anual > 0) t += " Aparte, <b>"+money(m.anual)+"</b> no cuentan para IVA pero suman a tu deducción anual.";
+    if(m.tardias) t += " Hay <b>"+m.tardias+"</b> factura"+(m.tardias===1?"":"s")+" que llegó después del cierre y no está contada.";
     $("ledger").innerHTML = t;
 
     renderCanales();
@@ -1350,7 +1719,11 @@
       var n = 0;
       c.pagados.forEach(function(u){
         state.gastos.forEach(function(g){
-          if(g.uuid && g.uuid === u && !g.pagado){ g.pagado = true; delete g._c; n++; }
+          if(g.uuid && g.uuid === u && !g.pagado){
+            g.pagado = true; delete g._c; n++;
+            // Si el mes del gasto ya se declaró, liberarlo lo cambiaría por atrás.
+            if(state.declaraciones[monthKey(g.fecha)]) g.tardia = true;
+          }
         });
       });
       return "pago:" + n;
@@ -1360,26 +1733,31 @@
     var mio = state.rfc && c.emisorRfc === state.rfc;
     if(mio){
       if(yaEsta(state.ingresos, c)) return "dup";
+      var tardeIng = !!state.declaraciones[monthKey(c.fecha)];
       state.ingresos.push({
         id:uid("i"), uuid:c.uuid, fecha:c.fecha, receptor:c.receptorNombre||c.receptorRfc,
         subtotal:c.subtotal, ivaTrasladado:c.ivaTrasladado,
-        ivaRetenido:c.ivaRetenido, isrRetenido:c.isrRetenido
+        ivaRetenido:c.ivaRetenido, isrRetenido:c.isrRetenido,
+        tardia: tardeIng || undefined
       });
       if(monthKey(c.fecha)!==mesActual) mesActual=monthKey(c.fecha);
-      return "ingreso";
+      return tardeIng ? "tardia" : "ingreso";
     }
 
     if(yaEsta(state.gastos, c)) return "dup";
     // Una nota de crédito (tipo E) resta: se guarda con los importes en negativo.
     var signo = c.tipo === "E" ? -1 : 1;
+    // Si su mes ya se declaró, no puede reescribirlo en silencio.
+    var tarde = !!state.declaraciones[monthKey(c.fecha)];
     state.gastos.push({
       id:uid("g"), uuid:c.uuid, proveedor:c.emisorNombre, emisorRfc:c.emisorRfc, receptorRfc:c.receptorRfc,
       fecha:c.fecha, subtotal:r2(c.subtotal*signo), iva:r2(c.ivaTrasladado*signo), total:r2(c.total*signo),
       formaPago:c.formaPago, metodoPago:c.metodoPago, moneda:c.moneda,
-      nota: c.tipo === "E", pagado: c.metodoPago !== "PPD",
+      nota: c.tipo === "E", pagado: c.metodoPago !== "PPD", tardia: tarde || undefined,
       claves:c.claves, descripcion:c.descripcion
     });
     if(monthKey(c.fecha)!==mesActual) mesActual=monthKey(c.fecha);
+    if(tarde) return "tardia";
     return c.tipo === "E" ? "nota" : "gasto";
   }
 
@@ -1392,7 +1770,7 @@
       if(otros) abrirForm();
       return;
     }
-    var pend=xmls.length, ing=0, gas=0, notas=0, pagos=0, dup=0, err=0, ign=0;
+    var pend=xmls.length, ing=0, gas=0, notas=0, pagos=0, dup=0, err=0, ign=0, tard=0;
     xmls.forEach(function(file){
       var rd=new FileReader();
       rd.onload=function(){
@@ -1403,6 +1781,7 @@
           if(res==="ingreso") ing++;
           else if(res==="gasto") gas++;
           else if(res==="nota") notas++;
+          else if(res==="tardia") tard++;
           else if(res==="dup") dup++;
           else if(res==="ignorado") ign++;
           else if(res.indexOf("pago:")===0) pagos += parseInt(res.split(":")[1],10);
@@ -1417,6 +1796,7 @@
       if(ing) p.push(ing===1?"1 factura tuya":ing+" facturas tuyas");
       if(gas) p.push(gas===1?"1 gasto":gas+" gastos");
       if(notas) p.push(notas+" nota"+(notas>1?"s":"")+" de crédito");
+      if(tard) p.push(tard+(tard>1?" son de un mes ya declarado":" es de un mes ya declarado"));
       if(pagos) p.push(pagos+" liberada"+(pagos>1?"s":"")+" por complemento de pago");
       if(dup) p.push(dup+" repetida"+(dup>1?"s":""));
       if(ign) p.push(ign+" ignorada"+(ign>1?"s":"")+" (nómina o traslado)");
@@ -1536,6 +1916,7 @@
         state.gastos=Array.isArray(s.gastos)?s.gastos:[];
         state.gastos.forEach(function(g){ delete g._c; });
         state.reglas=(s.reglas&&typeof s.reglas==="object")?s.reglas:{};
+        state.declaraciones=(s.declaraciones&&typeof s.declaraciones==="object")?s.declaraciones:{};
         $("cfg-rfc").value=state.rfc;
         $("cfg-ing").value=Number(state.ingresoDefault).toFixed(2);
         save(); render(); estado("respaldo restaurado");
